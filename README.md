@@ -35,7 +35,7 @@ pip3 install <module>
 Download Repository from GitHub and enter in **src** folder
 
 ```
-git clone
+git clone https://github.com/Piltxi/Vivino-Crawler
 ```
 
 ```
