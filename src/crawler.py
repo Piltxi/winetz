@@ -24,21 +24,10 @@ def getWine (wine_id, year, page):
 def inputParameters (verbose, specify, development, production): 
 
     if production: 
-        command.production()
+        return command.production()
 
     if development: 
-        params = {
-
-        "wine_type_ids[]": "1",
-        "country_codes[]":"it",
-
-        "min_rating" : "4.2",
-        "price_range_max": "9",
-        } 
-
-        languageList = ["it"]
-
-        return params, languageList
+        return command.development()
 
     info_requested = ['countries', 'minimum rating', 'maximum price', 'minimum price', 'type']
     wine_info = {}
@@ -54,7 +43,6 @@ def inputParameters (verbose, specify, development, production):
         selectedLanguages = input(f"Type the language codes for retrieving reviews> ").strip()
         languageList = selectedLanguages.split()
 
-    #!To do: verify language code
 
     params = {
 
@@ -84,134 +72,139 @@ def inputParameters (verbose, specify, development, production):
     return (params, languageList)
     
 def wineCrawler (verbose, wineParameters): 
-    
-    if verbose: 
-        print ("Wine parameters loaded for scraping process:")
-        for key, value in wineParameters.items():
-            print(f"{key}: {value}")
 
-    # First request (reading number of matches obtained)
-    req = requests.get(
-            "https://www.vivino.com/api/explore/explore",
-            params = wineParameters, 
-            headers={
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0"
-            },
-    )
-
-    matches = req.json()['explore_vintage']['records_matched']
-   
-    print ("]Matches obtained: ", matches)
-
-    wineStyleID = set ()
-   
-    mainwine_dataframe = pd.DataFrame(columns=["ID", "Winery", "Name", "Year", "Style", "Rating", "Rates count", "Type", "Price"]) 
-    mainstyle_dataframe = pd.DataFrame(columns=["ID", "Region", "Description", "Nation"]) 
-
-    if verbose: 
-        print ("___ START SCRAPING ___")
-
-    if not verbose: 
-        iteraBar = matches
-        progress_bar = tqdm(total=iteraBar, desc="]drinking", unit="wine", position=0, dynamic_ncols=True)
-
-
-    for i in range(1, max(1, int(matches / 25)) + 1):
-        wineParameters ['page'] = i
-
+    try: 
         if verbose: 
-            print (f"Scraping from {i}")
+            print ("Wine parameters loaded for scraping process:")
+            for key, value in wineParameters.items():
+                print(f"{key}: {value}")
 
-        rew = requests.get (
-            "https://www.vivino.com/api/explore/explore",
-            params = wineParameters, 
-            headers={
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0"
-            },
+        # First request (reading number of matches obtained)
+        req = requests.get(
+                "https://www.vivino.com/api/explore/explore",
+                params = wineParameters, 
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0"
+                },
         )
 
-        #!TODO getting alchol gradation
+        matches = req.json()['explore_vintage']['records_matched']
+    
+        print ("]Matches obtained: ", matches)
+        checkWineTz(3, [matches,wineParameters])
 
-        """"
-        #Questo code stampa la struttura del json
-        all_wines_data = rew.json()["explore_vintage"]["matches"]
-        print (json.dumps(all_wines_data[0], indent=4))
-        #for i in range (len(all_wines_data)): 
-            #print(json.dumps(all_wines_data[i], indent=4))
-        
-        quit()
-        """
-        
-        """
-        results = [
-            (
-                Winery -> t["vintage"]["wine"]["winery"]["name"],
-                Year -> t["vintage"]["year"],
-                ID -> t["vintage"]["wine"]["id"],
-                WINE -> f'{t["vintage"]["wine"]["name"]} {t["vintage"]["year"]}',
-                RATING -> t["vintage"]["statistics"]["ratings_average"],
-                RATE COUNT -> t["vintage"]["statistics"]["ratings_count"]
+        wineStyleID = set ()
+    
+        mainwine_dataframe = pd.DataFrame(columns=["ID", "Winery", "Name", "Year", "Style", "Rating", "Rates count", "Type", "Price"]) 
+        mainstyle_dataframe = pd.DataFrame(columns=["ID", "Region", "Description", "Nation"]) 
+
+        if verbose: 
+            print ("___ START SCRAPING ___")
+
+        if not verbose: 
+            iteraBar = matches
+            progress_bar = tqdm(total=iteraBar, desc="]drinking", unit="wine", position=0, dynamic_ncols=True)
+
+
+        for i in range(1, max(1, int(matches / 25)) + 1):
+            wineParameters ['page'] = i
+
+            if verbose: 
+                print (f"Scraping from {i}")
+
+            rew = requests.get (
+                "https://www.vivino.com/api/explore/explore",
+                params = wineParameters, 
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0"
+                },
             )
-            for t in rew.json()["explore_vintage"]["matches"]
-        ]
-        """
 
-        for t in rew.json()["explore_vintage"]["matches"]: 
+            #!TODO getting alchol gradation
+
+            """"
+            #Questo code stampa la struttura del json
+            all_wines_data = rew.json()["explore_vintage"]["matches"]
+            print (json.dumps(all_wines_data[0], indent=4))
+            #for i in range (len(all_wines_data)): 
+                #print(json.dumps(all_wines_data[i], indent=4))
             
-            styleID = t["vintage"]["wine"]["style"]["id"]
+            quit()
+            """
+            
+            """
+            results = [
+                (
+                    Winery -> t["vintage"]["wine"]["winery"]["name"],
+                    Year -> t["vintage"]["year"],
+                    ID -> t["vintage"]["wine"]["id"],
+                    WINE -> f'{t["vintage"]["wine"]["name"]} {t["vintage"]["year"]}',
+                    RATING -> t["vintage"]["statistics"]["ratings_average"],
+                    RATE COUNT -> t["vintage"]["statistics"]["ratings_count"]
+                )
+                for t in rew.json()["explore_vintage"]["matches"]
+            ]
+            """
 
-            if styleID not in wineStyleID: 
-                wineStyleID.add(styleID)
+            for t in rew.json()["explore_vintage"]["matches"]: 
+                
+                styleID = t["vintage"]["wine"]["style"]["id"]
 
-                styleData = [(
-                    t["vintage"]["wine"]["style"]["id"],
-                    t["vintage"]["wine"]["style"]["regional_name"],
-                    t["vintage"]["wine"]["style"]["description"],
-                    t["vintage"]["wine"]["style"]["country"]["code"]
-                    )
+                if styleID not in wineStyleID: 
+                    wineStyleID.add(styleID)
+
+                    styleData = [(
+                        t["vintage"]["wine"]["style"]["id"],
+                        t["vintage"]["wine"]["style"]["regional_name"],
+                        t["vintage"]["wine"]["style"]["description"],
+                        t["vintage"]["wine"]["style"]["country"]["code"]
+                        )
+                    ]
+
+                    styleDataframe = pd.DataFrame(
+                        styleData,
+                        columns=["ID", "Region", "Description", "Nation"]
+                    ) 
+                    mainstyle_dataframe = pd.concat([mainstyle_dataframe, styleDataframe], ignore_index=True)
+
+                wineData = [ (
+                        t["vintage"]["wine"]["id"],
+                        t["vintage"]["wine"]["winery"]["name"],
+                        t["vintage"]["wine"]["name"],
+                        t["vintage"]["year"],
+                        t["vintage"]["wine"]["style"]["id"],
+                        t["vintage"]["statistics"]["ratings_average"],
+                        t["vintage"]["statistics"]["ratings_count"],
+                        t["vintage"]["wine"]["type_id"],
+                        t["price"]["amount"]
+                        # alchol gradation)
+                        )
                 ]
 
-                styleDataframe = pd.DataFrame(
-                    styleData,
-                    columns=["ID", "Region", "Description", "Nation"]
-                ) 
-                mainstyle_dataframe = pd.concat([mainstyle_dataframe, styleDataframe], ignore_index=True)
+                dataframe = pd.DataFrame(
+                    wineData,
+                    columns=["ID", "Winery", "Name", "Year", "Style", "Rating", "Rates count", "Type", "Price"],
+                )
 
-            wineData = [ (
-                    t["vintage"]["wine"]["id"],
-                    t["vintage"]["wine"]["winery"]["name"],
-                    t["vintage"]["wine"]["name"],
-                    t["vintage"]["year"],
-                    t["vintage"]["wine"]["style"]["id"],
-                    t["vintage"]["statistics"]["ratings_average"],
-                    t["vintage"]["statistics"]["ratings_count"],
-                    t["vintage"]["wine"]["type_id"],
-                    t["price"]["amount"]
-                    # alchol gradation)
-                    )
-            ]
+                mainwine_dataframe = pd.concat([mainwine_dataframe, dataframe], ignore_index=True)
+        
+                if verbose: 
+                    print(f"Size of main dataframe after page {i}: {len(mainwine_dataframe)}")
 
-            dataframe = pd.DataFrame(
-                wineData,
-                columns=["ID", "Winery", "Name", "Year", "Style", "Rating", "Rates count", "Type", "Price"],
-            )
+                if not verbose: 
+                    progress_bar.update(1)
 
-            mainwine_dataframe = pd.concat([mainwine_dataframe, dataframe], ignore_index=True)
-    
-            if verbose: 
-                print(f"Size of main dataframe after page {i}: {len(mainwine_dataframe)}")
+        if not verbose: 
+            progress_bar.close()
 
-            if not verbose: 
-                progress_bar.update(1)
+        mainwine_dataframe = mainwine_dataframe.drop_duplicates(subset="ID")
+        
+        if verbose:
+            print ("___ END SCRAPING ___")
 
-    
-    if not verbose: 
-        progress_bar.close()
-
-    mainwine_dataframe = mainwine_dataframe.drop_duplicates(subset="ID")
-    
-    if verbose:
-        print ("___ END SCRAPING ___")
+    except KeyboardInterrupt: 
+        exportCSV ("wine", mainwine_dataframe, "recovered")
+        quit()
     
     return mainwine_dataframe, mainstyle_dataframe
     
@@ -226,49 +219,64 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
         progress_bar = tqdm(total=iteraBar, desc="]reading", unit="wine", position=0, dynamic_ncols=True)
 
     ratings = []
-    for _, row in wineDF.iterrows():
-        page = 1
-        while True:
-           
-            if verbose: 
-                print(f'Getting info about wine {row["ID"]}-{row["Year"]} Page {page}')
+    
+    try: 
+        for _, row in wineDF.iterrows():
+            page = 1
+            while True:
+            
+                if verbose: 
+                    print(f'Getting info about wine {row["ID"]}-{row["Year"]} Page {page}')
 
-            d = getWine(row["ID"], row["Year"], page)
+                d = getWine(row["ID"], row["Year"], page)
 
-            if not d["reviews"]:
-                break
+                if not d["reviews"]:
+                    break
 
-            for r in d["reviews"]:
-                if r["language"] not in selectedLanguages:
-                    continue
+                for r in d["reviews"]:
+                    if r["language"] not in selectedLanguages:
+                        continue
 
-                ratings.append(
-                    [
-                        row["Year"],
-                        row["ID"],
-                        r["rating"],
-                        r["note"],
-                        r["created_at"],
-                    ]
-                )
-            page += 1
-        
+                    ratings.append(
+                        [
+                            row["Year"],
+                            row["ID"],
+                            r["rating"],
+                            r["note"],
+                            r["created_at"],
+                        ]
+                    )
+                page += 1
+            
+            if not verbose: 
+                progress_bar.update(1)
+
         if not verbose: 
-            progress_bar.update(1)
+            progress_bar.close()
 
-    if not verbose: 
-        progress_bar.close()
-
-    ratings = pd.DataFrame(
-        ratings, columns=["Year", "ID", "User Rating", "Note", "CreatedAt"]
-    )
+        ratings = pd.DataFrame(
+            ratings, columns=["Year", "ID", "User Rating", "Note", "CreatedAt"]
+        )
+    
+    except KeyboardInterrupt:
+        ratings = pd.DataFrame(
+            ratings, columns=["Year", "ID", "User Rating", "Note", "CreatedAt"]
+        )
+        df_out = ratings.merge(wineDF)
+        exportCSV ("reviews", df_out, "recovered")
+        print ("\nunexpected interruption. emergency export and shutdown\n")
+        quit()
 
     df_out = ratings.merge(wineDF)
 
     return df_out
 
-def exportCSV (data, dataframe): 
+def exportCSV (data, dataframe, currentTime): 
     
+    if currentTime == "recovered": 
+        timing = datetime.now().strftime("%H.%M")
+        currentTime = currentTime + " " + timing
+
     #* path directory definition
     directory_name = "../out"
 
@@ -287,7 +295,6 @@ def exportCSV (data, dataframe):
         except subprocess.CalledProcessError as e:
             print(f"Error in creating second directory: {e}")
 
-    currentTime = datetime.now().strftime("%H.%M")
     directory_name = f"../out/out {currentData}/dataset {currentTime}"
 
     if not os.path.exists(directory_name):
@@ -296,7 +303,7 @@ def exportCSV (data, dataframe):
         except subprocess.CalledProcessError as e:
             print(f"Error in creating second directory: {e}")
 
-    name = f"../out/{directory_name}/out {data}.csv"
+    name = f"../out/{directory_name}/{data}.csv"
 
     dataframe.to_csv (name, index=False)
 
@@ -305,20 +312,22 @@ def main (verbose, reset, specify, development, production):
     if reset: 
         resetInfo()
     
+    currentTime = datetime.now().strftime("%H.%M")
+    
     (wineParameters, selectedLanguages) = inputParameters(verbose, specify, development, production)
 
     wineDF, styleDF = wineCrawler (verbose, wineParameters)
-    
+
     checkWineTz(2, ["wine", wineDF])
-    exportCSV ("wine", wineDF)
+    exportCSV ("wine", wineDF, currentTime)
     
     checkWineTz(2, ["style", styleDF])
-    exportCSV ("style", styleDF)
+    exportCSV ("style", styleDF, currentTime)
 
     reviewsDF = reviewsCrawler (verbose, wineDF, selectedLanguages)
     checkWineTz(2, ["reviews", reviewsDF])
 
-    exportCSV ("reviews", reviewsDF)
+    exportCSV ("reviews", reviewsDF, currentTime)
 
     print ("]datasets exported successfully")
 

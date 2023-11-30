@@ -26,6 +26,17 @@ def checkWineTz (arg, data):
                 print (f"ERROR 02 - {data[0]} Dataframe")
                 quit()
 
+        case 3: 
+            
+            if data[0] == 0:
+                print (f"ERROR 03 - No results match your search criteria:\n")
+
+                print ("Wine parameters loaded for scraping process:")
+                for key, value in data[1].items():
+                    print(f"{key}: {value}")
+
+                quit()
+
         case _: 
             print ("\nUNKNOW ERROR XY")
             quit ()

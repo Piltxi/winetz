@@ -62,12 +62,18 @@ python3 crawler.py -v
 ```
 WineTz acquires filtering parameters in a special way.
 **This option must be specialized towards the target of interest.**
+You can change WineTz search filters by using the ***src/command.py*** **module.** and ***production()*** **function**. 
 ```
-python3 crawler.py -d
+python3 crawler.py -p
 ```
 ### ⚖️ Start crawling
 When WineTz starts its tasks, it prints the number of matches obtained through requests to the *vivino.com* API.
 Afterwards, you will see a progress bar describing the progress of the review retrieval.
+
+WineTz creates an output folder */out*. Inside */out* create a directory for each exported dataset.
+Inside the *dataset directory*, WineTz exports three *.csv* files: wines, style and reviews.
+
+*wine.csv* contains information about wines <br> *style.csv* provides information on wine styles <br> *reviews.csv* the reviews of each wine.
 
 Happy scraping!
 
