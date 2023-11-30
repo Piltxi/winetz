@@ -6,6 +6,7 @@ from tqdm import tqdm
 import os
 import subprocess
 from datetime import datetime
+import json
 
 from checkCrawler import resetInfo, checkWineTz
 
@@ -29,12 +30,15 @@ def inputParameters (verbose, specify, development):
 
         "min_rating" : "4.2",
         "price_range_max": "9",
-        }
-        
-        return params
+        } 
+
+        languageList = ["it"]
+
+        return params, languageList
 
     info_requested = ['countries', 'minimum rating', 'maximum price', 'minimum price', 'type']
     wine_info = {}
+    languageList = []
 
     if specify: 
         print ("Enter the following parameters (press Enter to skip):")
@@ -42,6 +46,11 @@ def inputParameters (verbose, specify, development):
             
             user_input = input(f"Type wine {item}> ").strip()
             wine_info[item] = user_input
+
+        selectedLanguages = input(f"Type the language codes for retrieving reviews> ").strip()
+        languageList = selectedLanguages.split()
+
+    #!To do: verify language code
 
     params = {
 
@@ -54,17 +63,28 @@ def inputParameters (verbose, specify, development):
     }
 
     checkWineTz (1, [params["price_range_min"], params["price_range_max"]])
-        
-    if verbose: 
-        print ("Debug Print: \n")
-        print(params)
 
-    return params
+    if languageList is None: 
+        languageList.append ("en")
+        languageList.append ("it")
+
+
+    if verbose: 
+        for key, value in params.items():
+            print(f"{key}: {value}")
+        print ("Selected Languages: ")
+        for item in languageList: 
+            print (f"{item} ", end='')
+        print ("\n")
+
+    return (params, languageList)
     
 def wineCrawler (verbose, wineParameters): 
     
     if verbose: 
-        print ("loaded parameters for crawling: \n", wineParameters)
+        print ("Wine parameters loaded for scraping process:")
+        for key, value in wineParameters.items():
+            print(f"{key}: {value}")
 
     # First request (reading number of matches obtained)
     req = requests.get(
@@ -81,6 +101,8 @@ def wineCrawler (verbose, wineParameters):
 
     main_dataframe = pd.DataFrame(columns=["Winery", "Year", "Wine ID", "Wine", "Rating", "Rates count"]) 
 
+    print ("___ START SCRAPING ___")
+
     for i in range(1, max(1, int(matches / 25)) + 1):
         wineParameters ['page'] = i
 
@@ -94,6 +116,35 @@ def wineCrawler (verbose, wineParameters):
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0"
             },
         )
+
+        print (rew.url)
+
+        #!TODO è necessario convertire il tipo di link per ottenere l'informazione sulla gradazione alcolica
+        
+        """
+        html_content = rew.text
+        with open("html_content.html", "w", encoding="utf-8") as html_file:
+            html_file.write(html_content)
+        quit()
+        """
+        # start_index = html_content.find("window.__PRELOADED_STATE__.vintagePageInformation = ")
+        # end_index = html_content.find("};", start_index) + 1
+        # json_data = html_content[start_index:end_index]
+
+        # json_data = json_data.replace("//beware of injecting user-generated content into the page here without sanitizing it", "")
+        # wine_info = json.loads(json_data)
+        # print(wine_info)
+        # with open("ciao.json", "w") as json_file:
+        #     json.dump(wine_info, json_file, indent=4)
+
+        # quit()
+
+        """"
+        Questo code stampa la struttura del json
+        all_wines_data = rew.json()["explore_vintage"]["matches"]
+        print(json.dumps(all_wines_data[0], indent=4))
+        quit()
+        """
 
         results = [
             (
@@ -117,9 +168,11 @@ def wineCrawler (verbose, wineParameters):
             print(f"Size of main dataframe after page {i}: {len(main_dataframe)}")
 
     main_dataframe = main_dataframe.drop_duplicates(subset="Wine ID")
+    
+    print ("___ END SCRAPING ___")
     return main_dataframe
     
-def reviewsCrawler (verbose, wineDF): 
+def reviewsCrawler (verbose, wineDF, selectedLanguages): 
     
     if verbose: 
         print ("Start reviews crawling...\n")
@@ -143,8 +196,8 @@ def reviewsCrawler (verbose, wineDF):
                 break
 
             for r in d["reviews"]:
-                # if r["language"] != "en": # <-- get only english reviews
-                #     continue
+                if r["language"] not in selectedLanguages:
+                    continue
 
                 ratings.append(
                     [
@@ -168,7 +221,6 @@ def reviewsCrawler (verbose, wineDF):
     )
 
     df_out = ratings.merge(wineDF)
-    #df_out.to_csv("aggiornatorevdev.csv", index=False)
 
     return df_out
 
@@ -202,14 +254,14 @@ def main (verbose, reset, specify, development):
     if reset: 
         resetInfo()
     
-    wineParameters = inputParameters(verbose, specify, development)
+    (wineParameters, selectedLanguages) = inputParameters(verbose, specify, development)
 
     wineDF = wineCrawler (verbose, wineParameters)
     
     checkWineTz(2, ["wine", wineDF])
     exportCSV ("wine", wineDF)
 
-    reviewsDF = reviewsCrawler (verbose, wineDF)
+    reviewsDF = reviewsCrawler (verbose, wineDF, selectedLanguages)
     checkWineTz(2, ["reviews", reviewsDF])
 
     exportCSV ("reviews", reviewsDF)
