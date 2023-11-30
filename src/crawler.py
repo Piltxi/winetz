@@ -99,7 +99,11 @@ def wineCrawler (verbose, wineParameters):
     if verbose: 
         print ("Matches obtained: ", matches)
 
-    main_dataframe = pd.DataFrame(columns=["Winery", "Year", "Wine ID", "Wine", "Rating", "Rates count"]) 
+    wineStyleID = set ()
+   
+    #mainwine_dataframe = pd.DataFrame(columns=["Winery", "Year", "ID", "Wine", "Rating", "Rates count"]) 
+    mainwine_dataframe = pd.DataFrame(columns=["ID", "Winery", "Name", "Year", "Style", "Rating", "Rates count", "Type"]) 
+    mainstyle_dataframe = pd.DataFrame(columns=["ID", "Region", "Description", "Nation"]) 
 
     print ("___ START SCRAPING ___")
 
@@ -117,60 +121,82 @@ def wineCrawler (verbose, wineParameters):
             },
         )
 
-        print (rew.url)
-
-        #!TODO è necessario convertire il tipo di link per ottenere l'informazione sulla gradazione alcolica
-        
-        """
-        html_content = rew.text
-        with open("html_content.html", "w", encoding="utf-8") as html_file:
-            html_file.write(html_content)
-        quit()
-        """
-        # start_index = html_content.find("window.__PRELOADED_STATE__.vintagePageInformation = ")
-        # end_index = html_content.find("};", start_index) + 1
-        # json_data = html_content[start_index:end_index]
-
-        # json_data = json_data.replace("//beware of injecting user-generated content into the page here without sanitizing it", "")
-        # wine_info = json.loads(json_data)
-        # print(wine_info)
-        # with open("ciao.json", "w") as json_file:
-        #     json.dump(wine_info, json_file, indent=4)
-
-        # quit()
+        #!TODO getting alchol gradation
 
         """"
-        Questo code stampa la struttura del json
+        #Questo code stampa la struttura del json
         all_wines_data = rew.json()["explore_vintage"]["matches"]
-        print(json.dumps(all_wines_data[0], indent=4))
+        print (json.dumps(all_wines_data[0], indent=4))
+        #for i in range (len(all_wines_data)): 
+            #print(json.dumps(all_wines_data[i], indent=4))
+        
         quit()
         """
-
+        
+        """
         results = [
             (
-                t["vintage"]["wine"]["winery"]["name"],
-                t["vintage"]["year"],
-                t["vintage"]["wine"]["id"],
-                f'{t["vintage"]["wine"]["name"]} {t["vintage"]["year"]}',
-                t["vintage"]["statistics"]["ratings_average"],
-                t["vintage"]["statistics"]["ratings_count"]
+                Winery -> t["vintage"]["wine"]["winery"]["name"],
+                Year -> t["vintage"]["year"],
+                ID -> t["vintage"]["wine"]["id"],
+                WINE -> f'{t["vintage"]["wine"]["name"]} {t["vintage"]["year"]}',
+                RATING -> t["vintage"]["statistics"]["ratings_average"],
+                RATE COUNT -> t["vintage"]["statistics"]["ratings_count"]
             )
             for t in rew.json()["explore_vintage"]["matches"]
         ]
+        """
 
-        dataframe = pd.DataFrame(
-            results,
-            columns=["Winery", "Year", "Wine ID", "Wine", "Rating", "Rates count"],
-        )
+        for t in rew.json()["explore_vintage"]["matches"]: 
+            
+            styleID = t["vintage"]["wine"]["style"]["id"]
 
-        main_dataframe = pd.concat([main_dataframe, dataframe], ignore_index=True)
-        if verbose: 
-            print(f"Size of main dataframe after page {i}: {len(main_dataframe)}")
+            if styleID not in wineStyleID: 
+                wineStyleID.add(styleID)
 
-    main_dataframe = main_dataframe.drop_duplicates(subset="Wine ID")
+                styleData = [(
+                    t["vintage"]["wine"]["style"]["id"],
+                    t["vintage"]["wine"]["style"]["regional_name"],
+                    t["vintage"]["wine"]["style"]["description"],
+                    t["vintage"]["wine"]["style"]["country"]["code"]
+                    )
+                ]
+
+                styleDataframe = pd.DataFrame(
+                    styleData,
+                    columns=["ID", "Region", "Description", "Nation"]
+                ) 
+                mainstyle_dataframe = pd.concat([mainstyle_dataframe, styleDataframe], ignore_index=True)
+
+            wineData = [ (
+                    t["vintage"]["wine"]["id"],
+                    t["vintage"]["wine"]["winery"]["name"],
+                    t["vintage"]["wine"]["name"],
+                    t["vintage"]["year"],
+                    t["vintage"]["wine"]["style"]["id"],
+                    t["vintage"]["statistics"]["ratings_average"],
+                    t["vintage"]["statistics"]["ratings_count"],
+                    t["vintage"]["wine"]["type_id"]
+                    # alchol gradation)
+                    )
+            ]
+
+            dataframe = pd.DataFrame(
+                wineData,
+                columns=["ID", "Winery", "Name", "Year", "Style", "Rating", "Rates count", "Type"],
+            )
+
+            mainwine_dataframe = pd.concat([mainwine_dataframe, dataframe], ignore_index=True)
+            if verbose: 
+                print(f"Size of main dataframe after page {i}: {len(mainwine_dataframe)}")
+
+
+    
+    mainwine_dataframe = mainwine_dataframe.drop_duplicates(subset="ID")
+    mainstyle_dataframe = mainstyle_dataframe.drop_duplicates(subset="ID")
     
     print ("___ END SCRAPING ___")
-    return main_dataframe
+    return mainwine_dataframe, mainstyle_dataframe
     
 def reviewsCrawler (verbose, wineDF, selectedLanguages): 
     
@@ -188,9 +214,9 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
         while True:
            
             if verbose: 
-                print(f'Getting info about wine {row["Wine ID"]}-{row["Year"]} Page {page}')
+                print(f'Getting info about wine {row["ID"]}-{row["Year"]} Page {page}')
 
-            d = getWine(row["Wine ID"], row["Year"], page)
+            d = getWine(row["ID"], row["Year"], page)
 
             if not d["reviews"]:
                 break
@@ -202,7 +228,7 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
                 ratings.append(
                     [
                         row["Year"],
-                        row["Wine ID"],
+                        row["ID"],
                         r["rating"],
                         r["note"],
                         r["created_at"],
@@ -217,7 +243,7 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
         progress_bar.close()
 
     ratings = pd.DataFrame(
-        ratings, columns=["Year", "Wine ID", "User Rating", "Note", "CreatedAt"]
+        ratings, columns=["Year", "ID", "User Rating", "Note", "CreatedAt"]
     )
 
     df_out = ratings.merge(wineDF)
@@ -256,10 +282,13 @@ def main (verbose, reset, specify, development):
     
     (wineParameters, selectedLanguages) = inputParameters(verbose, specify, development)
 
-    wineDF = wineCrawler (verbose, wineParameters)
+    wineDF, styleDF = wineCrawler (verbose, wineParameters)
     
     checkWineTz(2, ["wine", wineDF])
     exportCSV ("wine", wineDF)
+    
+    checkWineTz(2, ["style", styleDF])
+    exportCSV ("style", styleDF)
 
     reviewsDF = reviewsCrawler (verbose, wineDF, selectedLanguages)
     checkWineTz(2, ["reviews", reviewsDF])
