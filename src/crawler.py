@@ -8,6 +8,7 @@ import subprocess
 from datetime import datetime
 import json
 
+import command
 from checkCrawler import resetInfo, checkWineTz
 
 def getWine (wine_id, year, page):
@@ -20,7 +21,10 @@ def getWine (wine_id, year, page):
 
     return data
 
-def inputParameters (verbose, specify, development): 
+def inputParameters (verbose, specify, development, production): 
+
+    if production: 
+        command.production()
 
     if development: 
         params = {
@@ -96,16 +100,21 @@ def wineCrawler (verbose, wineParameters):
     )
 
     matches = req.json()['explore_vintage']['records_matched']
-    if verbose: 
-        print ("Matches obtained: ", matches)
+   
+    print ("]Matches obtained: ", matches)
 
     wineStyleID = set ()
    
-    #mainwine_dataframe = pd.DataFrame(columns=["Winery", "Year", "ID", "Wine", "Rating", "Rates count"]) 
-    mainwine_dataframe = pd.DataFrame(columns=["ID", "Winery", "Name", "Year", "Style", "Rating", "Rates count", "Type"]) 
+    mainwine_dataframe = pd.DataFrame(columns=["ID", "Winery", "Name", "Year", "Style", "Rating", "Rates count", "Type", "Price"]) 
     mainstyle_dataframe = pd.DataFrame(columns=["ID", "Region", "Description", "Nation"]) 
 
-    print ("___ START SCRAPING ___")
+    if verbose: 
+        print ("___ START SCRAPING ___")
+
+    if not verbose: 
+        iteraBar = matches
+        progress_bar = tqdm(total=iteraBar, desc="]drinking", unit="wine", position=0, dynamic_ncols=True)
+
 
     for i in range(1, max(1, int(matches / 25)) + 1):
         wineParameters ['page'] = i
@@ -176,26 +185,34 @@ def wineCrawler (verbose, wineParameters):
                     t["vintage"]["wine"]["style"]["id"],
                     t["vintage"]["statistics"]["ratings_average"],
                     t["vintage"]["statistics"]["ratings_count"],
-                    t["vintage"]["wine"]["type_id"]
+                    t["vintage"]["wine"]["type_id"],
+                    t["price"]["amount"]
                     # alchol gradation)
                     )
             ]
 
             dataframe = pd.DataFrame(
                 wineData,
-                columns=["ID", "Winery", "Name", "Year", "Style", "Rating", "Rates count", "Type"],
+                columns=["ID", "Winery", "Name", "Year", "Style", "Rating", "Rates count", "Type", "Price"],
             )
 
             mainwine_dataframe = pd.concat([mainwine_dataframe, dataframe], ignore_index=True)
+    
             if verbose: 
                 print(f"Size of main dataframe after page {i}: {len(mainwine_dataframe)}")
 
+            if not verbose: 
+                progress_bar.update(1)
 
     
+    if not verbose: 
+        progress_bar.close()
+
     mainwine_dataframe = mainwine_dataframe.drop_duplicates(subset="ID")
-    mainstyle_dataframe = mainstyle_dataframe.drop_duplicates(subset="ID")
     
-    print ("___ END SCRAPING ___")
+    if verbose:
+        print ("___ END SCRAPING ___")
+    
     return mainwine_dataframe, mainstyle_dataframe
     
 def reviewsCrawler (verbose, wineDF, selectedLanguages): 
@@ -206,7 +223,7 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
 
     if not verbose: 
         iteraBar = len (wineDF)
-        progress_bar = tqdm(total=iteraBar, desc="reviews", unit="wine", position=0, dynamic_ncols=True)
+        progress_bar = tqdm(total=iteraBar, desc="]reading", unit="wine", position=0, dynamic_ncols=True)
 
     ratings = []
     for _, row in wineDF.iterrows():
@@ -270,17 +287,25 @@ def exportCSV (data, dataframe):
         except subprocess.CalledProcessError as e:
             print(f"Error in creating second directory: {e}")
 
-    currentTime = datetime.now().strftime("%H.%M.%S")
-    name = f"../out/{directory_name}/out {data} {currentTime}.csv"
+    currentTime = datetime.now().strftime("%H.%M")
+    directory_name = f"../out/out {currentData}/dataset {currentTime}"
+
+    if not os.path.exists(directory_name):
+        try:
+            os.makedirs(directory_name)
+        except subprocess.CalledProcessError as e:
+            print(f"Error in creating second directory: {e}")
+
+    name = f"../out/{directory_name}/out {data}.csv"
 
     dataframe.to_csv (name, index=False)
 
-def main (verbose, reset, specify, development): 
+def main (verbose, reset, specify, development, production): 
 
     if reset: 
         resetInfo()
     
-    (wineParameters, selectedLanguages) = inputParameters(verbose, specify, development)
+    (wineParameters, selectedLanguages) = inputParameters(verbose, specify, development, production)
 
     wineDF, styleDF = wineCrawler (verbose, wineParameters)
     
@@ -295,7 +320,7 @@ def main (verbose, reset, specify, development):
 
     exportCSV ("reviews", reviewsDF)
 
-    print ("Dataset exported.")
+    print ("]datasets exported successfully")
 
 if __name__ == "__main__":
     
@@ -308,6 +333,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    main(args.verbose, args.reset, args.specify, args.development)
-
-    #!TO DO: production option
+    main(args.verbose, args.reset, args.specify, args.development, args.production)
