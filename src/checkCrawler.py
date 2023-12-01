@@ -16,6 +16,10 @@ def checkWineTz (arg, data):
     
     match arg: 
 
+        case 0: 
+            print ("\nERROR 00 - WineTz crashed.\n You must specify filtering options.")
+            quit()
+
         case 1: 
             if float(data[0]) > float(data[1]): 
                 print (f"ERROR 01 - Loading Price {data[0]} > {data[1]} .\n")
