@@ -181,12 +181,16 @@ def wineCrawler (verbose, wineParameters):
                         )
                 ]
 
-                dataframe = pd.DataFrame(
+                wineData = pd.DataFrame(
                     wineData,
                     columns=["ID", "Winery", "Name", "Year", "Style", "Rating", "Rates count", "Type", "Price"],
                 )
 
-                mainwine_dataframe = pd.concat([mainwine_dataframe, dataframe], ignore_index=True)
+
+                if not mainwine_dataframe.empty:
+                    mainwine_dataframe = pd.concat([mainwine_dataframe, wineData], ignore_index=True)
+                else:
+                    mainwine_dataframe = wineData.copy()
         
                 if verbose: 
                     print(f"Size of main dataframe after page {i}: {len(mainwine_dataframe)}")
@@ -219,15 +223,12 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
     
     if verbose: 
         print ("Start reviews crawling...\n")
-
-    ratings = []
     
     mainratings_dataframe = pd.DataFrame(columns=["Year", "ID", "User Rating", "Note", "CreatedAt"])
 
     if not verbose: 
-        iteraBar = len (wineDF)
-        progress_bar = tqdm(total=iteraBar, desc="]reading (0)", unit="wine", position=0, dynamic_ncols=True)
-    
+        iteraBar = len (wineDF) #{desc}{percentage:3.0%}{bar} {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]
+        progress_bar = tqdm(total=iteraBar, desc="]singing: ", unit="wine", position=0, dynamic_ncols=True, bar_format="{desc}{percentage:3.0f}%|{bar}  {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {postfix}]")
     try: 
         for _, row in wineDF.iterrows():
             page = 1
@@ -239,21 +240,12 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
                 d = getWine(row["ID"], row["Year"], page)
 
                 if not d["reviews"]:
+                    progress_bar.set_description(f"]singing") 
                     break
 
                 for r in d["reviews"]:
                     if r["language"] not in selectedLanguages:
                         continue
-
-                    ratings.append(
-                        [
-                            row["Year"],
-                            row["ID"],
-                            r["rating"],
-                            r["note"],
-                            r["created_at"],
-                        ]
-                    )
 
                     reviewsData = [
                         (
@@ -270,44 +262,34 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
                         columns=["Year", "ID", "User Rating", "Note", "CreatedAt"]
                     )
 
-                    mainratings_dataframe = pd.concat([mainratings_dataframe, reviewsData], ignore_index=True)
+                    if not mainratings_dataframe.empty:
+                        mainratings_dataframe = pd.concat([mainratings_dataframe, reviewsData], ignore_index=True)
+                    else:
+                        mainratings_dataframe = reviewsData.copy()
                 page += 1
             
             if not verbose: 
                 progress_bar.update(1)
-                progress_bar.set_description(f"]reading ({len(mainratings_dataframe)})") 
+                #progress_bar.set_postfix({'len': len(mainratings_dataframe)})
+                progress_bar.set_postfix(rev = len(mainratings_dataframe), refresh=True)
+                #progress_bar.set_postfix([str(len(mainratings_dataframe))])
 
+
+        
         if not verbose: 
             progress_bar.close()
-
-        ratings = pd.DataFrame(
-            ratings, columns=["Year", "ID", "User Rating", "Note", "CreatedAt"]
-        )
     
     except KeyboardInterrupt:
 
         if not verbose: 
             progress_bar.close()
-
-        ratings = pd.DataFrame(
-            ratings, columns=["Year", "ID", "User Rating", "Note", "CreatedAt"]
-        )
-        df_out = ratings.merge(wineDF)
         
-        # exportCSV ("reviews", df_out, "recovered")
-        # print ("\nunexpected interruption. emergency export and shutdown\n")
-        # quit()
-
         timing = datetime.now().strftime("%H.%M")
         message = "recovered" + " " + timing
-        exportCSV ("reviews", df_out, message)
+        exportCSV ("reviews", mainratings_dataframe, message)
         checkWineTz(4, message)
 
-    df_out = ratings.merge(wineDF)
-
-    exportCSV("reviews 2", mainratings_dataframe, "ciao")
-
-    return df_out
+    return mainratings_dataframe
 
 def exportCSV (data, dataframe, message): 
 
