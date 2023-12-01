@@ -41,6 +41,11 @@ def checkWineTz (arg, data):
 
                 quit()
 
+        case 4: 
+
+            print (f"\nyou turned off WineTz. emergency export and shutdown: check on /out/dataset {data}\nthe directory may be overwritten. if you need the exported data, make a backup of the dataset.")
+            quit()
+
         case _: 
             print ("\nUNKNOW ERROR XY")
             quit ()
