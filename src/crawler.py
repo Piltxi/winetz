@@ -203,7 +203,15 @@ def wineCrawler (verbose, wineParameters):
             print ("___ END SCRAPING ___")
 
     except KeyboardInterrupt: 
-        exportCSV ("wine", mainwine_dataframe, "recovered")
+        
+        if not verbose: 
+            progress_bar.close()
+
+        timing = datetime.now().strftime("%H.%M")
+        message = "recovered" + " " + timing
+        exportCSV ("wine", mainwine_dataframe, message)
+        exportCSV ("style", mainstyle_dataframe, message)
+        print (f"\nyou turned off WineTz. emergency export and shutdown.\nCheck on /out/dataset {message}")
         quit()
     
     return mainwine_dataframe, mainstyle_dataframe
@@ -259,23 +267,30 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
         )
     
     except KeyboardInterrupt:
+
+        if not verbose: 
+            progress_bar.close()
+
         ratings = pd.DataFrame(
             ratings, columns=["Year", "ID", "User Rating", "Note", "CreatedAt"]
         )
         df_out = ratings.merge(wineDF)
-        exportCSV ("reviews", df_out, "recovered")
-        print ("\nunexpected interruption. emergency export and shutdown\n")
+        
+        # exportCSV ("reviews", df_out, "recovered")
+        # print ("\nunexpected interruption. emergency export and shutdown\n")
+        # quit()
+
+        timing = datetime.now().strftime("%H.%M")
+        message = "recovered" + " " + timing
+        exportCSV ("reviews", df_out, message)
+        print (f"\nyou turned off WineTz. emergency export and shutdown.\nCheck on /out/dataset {message}")
         quit()
 
     df_out = ratings.merge(wineDF)
 
     return df_out
 
-def exportCSV (data, dataframe, currentTime): 
-    
-    if currentTime == "recovered": 
-        timing = datetime.now().strftime("%H.%M")
-        currentTime = currentTime + " " + timing
+def exportCSV (data, dataframe, message): 
 
     #* path directory definition
     directory_name = "../out"
@@ -295,7 +310,7 @@ def exportCSV (data, dataframe, currentTime):
         except subprocess.CalledProcessError as e:
             print(f"Error in creating second directory: {e}")
 
-    directory_name = f"../out/out {currentData}/dataset {currentTime}"
+    directory_name = f"../out/out {currentData}/dataset {message}"
 
     if not os.path.exists(directory_name):
         try:
@@ -314,7 +329,7 @@ def main (verbose, reset, specify, development, production):
     
     currentTime = datetime.now().strftime("%H.%M")
     
-    (wineParameters, selectedLanguages) = inputParameters(verbose, specify, development, production)
+    (wineParameters, selectedLanguages) = inputParameters (verbose, specify, development, production)
 
     wineDF, styleDF = wineCrawler (verbose, wineParameters)
 
@@ -341,5 +356,9 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--reset", action="store_true", help="reset directory out/")
 
     args = parser.parse_args()
+
+    if not (args.development or args.specify or args.production or args.reset):
+        parser.print_help()
+        checkWineTz(0, "options")
 
     main(args.verbose, args.reset, args.specify, args.development, args.production)
