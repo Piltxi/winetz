@@ -211,8 +211,7 @@ def wineCrawler (verbose, wineParameters):
         message = "recovered" + " " + timing
         exportCSV ("wine", mainwine_dataframe, message)
         exportCSV ("style", mainstyle_dataframe, message)
-        print (f"\nyou turned off WineTz. emergency export and shutdown.\nCheck on /out/dataset {message}")
-        quit()
+        checkWineTz(4, message)
     
     return mainwine_dataframe, mainstyle_dataframe
     
@@ -221,12 +220,13 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
     if verbose: 
         print ("Start reviews crawling...\n")
 
+    ratings = []
+    
+    mainratings_dataframe = pd.DataFrame(columns=["Year", "ID", "User Rating", "Note", "CreatedAt"])
 
     if not verbose: 
         iteraBar = len (wineDF)
-        progress_bar = tqdm(total=iteraBar, desc="]reading", unit="wine", position=0, dynamic_ncols=True)
-
-    ratings = []
+        progress_bar = tqdm(total=iteraBar, desc="]reading (0)", unit="wine", position=0, dynamic_ncols=True)
     
     try: 
         for _, row in wineDF.iterrows():
@@ -254,10 +254,28 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
                             r["created_at"],
                         ]
                     )
+
+                    reviewsData = [
+                        (
+                            row["Year"],
+                            row["ID"],
+                            r["rating"],
+                            r["note"],
+                            r["created_at"],
+                        )
+                    ]
+                    
+                    reviewsData = pd.DataFrame(
+                        reviewsData, 
+                        columns=["Year", "ID", "User Rating", "Note", "CreatedAt"]
+                    )
+
+                    mainratings_dataframe = pd.concat([mainratings_dataframe, reviewsData], ignore_index=True)
                 page += 1
             
             if not verbose: 
                 progress_bar.update(1)
+                progress_bar.set_description(f"]reading ({len(mainratings_dataframe)})") 
 
         if not verbose: 
             progress_bar.close()
@@ -283,10 +301,11 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
         timing = datetime.now().strftime("%H.%M")
         message = "recovered" + " " + timing
         exportCSV ("reviews", df_out, message)
-        print (f"\nyou turned off WineTz. emergency export and shutdown.\nCheck on /out/dataset {message}")
-        quit()
+        checkWineTz(4, message)
 
     df_out = ratings.merge(wineDF)
+
+    exportCSV("reviews 2", mainratings_dataframe, "ciao")
 
     return df_out
 
