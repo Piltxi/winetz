@@ -1,7 +1,7 @@
 def development (): 
     params = {
 
-        "wine_type_ids[]": "1",
+        "wine_type_ids[]": "1", 
         "country_codes[]":"it",
 
         "min_rating" : "4.2",
