@@ -1,4 +1,5 @@
-./src/appunti.py
 .DS_store
 ./src/.DS_store
 /out/*
+/crawler/out/
+/crawler/src/__pycache__/
