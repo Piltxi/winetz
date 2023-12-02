@@ -1,5 +1,5 @@
 .DS_store
-./src/.DS_store
-/out/*
-/in/*
-/src/__pycache__/
+crawler/src/.DS_store
+/crawler/out/*
+/crawler/in/*
+/crawler/src/__pycache__/

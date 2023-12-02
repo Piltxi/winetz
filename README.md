@@ -1,88 +1,36 @@
-<h1 align="center">WineTz Crawler</h3>
+<h1 align="center">WineTz</h1>
 
 <div align="center">
 
-[![Status](https://img.shields.io/badge/status-active-success.svg)]()
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
+[![Work in Progress](https://img.shields.io/badge/status-work_in_progress-yellow.svg)](https://shields.io/)
+
 </div>
 
+## 📝 Table of Contents
 
-<p align="center"> 
-Simple web crawling tool to retrieve reviews from <i>vivino.com</i> website. <br><br>
-WineTz allows you to specify some parameters to filter the search on the <i>vivino.com</i> environment, retrieves the reviews, and produces the export in <i>.csv dataset.</i>
-</p>
-
-## 🍷 Table of Contents
-
+- [About](#about)
 - [Getting Started](#getting_started)
+- [Deployment](#deployment)
 - [Usage](#usage)
 - [Built Using](#built_using)
+- [Authors](#authors)
 
-## 🥣 Getting Started <a name = "getting_started"></a>
+## 🍇 About <a name = "about"></a> 
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. 
+WineTz is a powerful tool that leverages sentiment analysis techniques to provide insights into the emotional tone of wine reviews. 
+<br><br>
+Whether you're a wine enthusiast, a sommelier, or a data-driven marketer, our engine helps you navigate the rich landscape of wine opinions.
+
+## 🏁 Getting Started <a name = "getting_started"></a>
 
 ### Prerequisites
 
-Check in **requirements.txt** for prerequisites and any libraries to install. 
-
-```
-pip3 install <module>
-```
-
 ### Installing
 
-Download Repository from GitHub and enter in **src** folder
+## 🎈 Usage <a name="usage"></a>
 
-```
-git clone https://github.com/Piltxi/Vivino-Crawler
-```
-
-```
-cd src
-```
-
-## 🥂 Usage <a name="usage"></a>
-### 📖 Options
-WineTz shows all available features.
-```
-python3 crawler.py -h
-```
-WineTz deletes output information and recovered reviews. The */out* directory will be deleted. 
-```
-python3 crawler.py -r
-```
-WineTz allows you to specify filtering options for your search. 
-```
-python3 crawler.py -s
-```
-WineTz prints additional information while running. **This option is useful and recommended during debugging.**
-```
-python3 crawler.py -v
-```
-WineTz acquires filtering parameters in a special way.
-**This option must be specialized towards the target of interest.**
-You can change WineTz search filters by using the ***src/command.py*** **module.** and ***production()*** **function**. 
-```
-python3 crawler.py -p
-```
-### ⚖️ Start crawling
-When WineTz starts its tasks, it prints the number of matches obtained through requests to the *vivino.com* API.
-Afterwards, you will see a progress bar describing the progress of the review retrieval.
-
-WineTz creates an output folder */out*. Inside */out* create a directory for each exported dataset.
-Inside the *dataset directory*, WineTz exports three *.csv* files: wines, style and reviews.
-
-*wine.csv* contains information about wines <br> *style.csv* provides information on wine styles <br> *reviews.csv* the reviews of each wine.
-
-Happy scraping!
+## 🚀 Deployment <a name = "deployment"></a>
 
 ## ⛏️ Built Using <a name = "built_using"></a>
+- Python 3.11.1 [https://www.python.org/]
 
-- [Python](https://docs.python.org/3/) - Main program
-- [Pandas](https://pandas.pydata.org/) - Python Data Analysis library
-- [Requests](https://pypi.org/project/requests/) - Python HTTP library
-
-## 👨🏻‍🔬 Authors <a name = "authors"></a>
-
-- [@piltxi](https://github.com/Piltxi/) *excellent singer after some wine* and amateur developer
