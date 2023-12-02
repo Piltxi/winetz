@@ -1,35 +1,49 @@
-<h1 align="center">WineTz</h1>
+<h1 align="center">WineTz Crawler</h3>
 
 <div align="center">
 
-[![Work in Progress](https://img.shields.io/badge/status-work_in_progress-yellow.svg)](https://shields.io/)
-
+[![Status](https://img.shields.io/badge/status-active-success.svg)]()
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
 </div>
 
-## 📝 Table of Contents
 
-- [About](#about)
+<p align="center"> 
+Simple web crawling tool to retrieve reviews from <i>vivino.com</i> website. <br><br>
+WineTz allows you to specify some parameters to filter the search on the <i>vivino.com</i> environment, retrieves the reviews, and produces the export in <i>.csv dataset.</i>
+</p>
+
+## 🍷 Table of Contents
+
 - [Getting Started](#getting_started)
-- [Deployment](#deployment)
 - [Usage](#usage)
 - [Built Using](#built_using)
-- [Authors](#authors)
 
-## 🍇 About <a name = "about"></a> 
+## 🥣 Getting Started <a name = "getting_started"></a>
 
-WineTz is a powerful tool that leverages sentiment analysis techniques to provide insights into the emotional tone of wine reviews. 
-<br><br>
-Whether you're a wine enthusiast, a sommelier, or a data-driven marketer, our engine helps you navigate the rich landscape of wine opinions.
-
-## 🏁 Getting Started <a name = "getting_started"></a>
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. 
 
 ### Prerequisites
 
+Check in **requirements.txt** for prerequisites and any libraries to install. 
+
+```
+pip3 install <module>
+```
+
 ### Installing
 
-## 🥂 Usage <a name="usage"></a>
+Download Repository from GitHub and enter in **src** folder
 
-### 📖 CRAWLER Options
+```
+git clone https://github.com/Piltxi/Vivino-Crawler
+```
+
+```
+cd src
+```
+
+## 🥂 Usage <a name="usage"></a>
+### 📖 Options
 WineTz shows all available features.
 ```
 python3 crawler.py -h
@@ -61,15 +75,14 @@ Inside the *dataset directory*, WineTz exports three *.csv* files: wines, style 
 
 *wine.csv* contains information about wines <br> *style.csv* provides information on wine styles <br> *reviews.csv* the reviews of each wine.
 
-
-## 🚀 Deployment <a name = "deployment"></a>
+Happy scraping!
 
 ## ⛏️ Built Using <a name = "built_using"></a>
+
 - [Python](https://docs.python.org/3/) - Main program
 - [Pandas](https://pandas.pydata.org/) - Python Data Analysis library
 - [Requests](https://pypi.org/project/requests/) - Python HTTP library
 
+## 👨🏻‍🔬 Authors <a name = "authors"></a>
 
-## ✍️ Authors <a name = "authors"></a>
-
-
+- [@piltxi](https://github.com/Piltxi/) *excellent singer after some wine* and amateur developer
