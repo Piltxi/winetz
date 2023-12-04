@@ -1,6 +1,5 @@
 import argparse
 import requests
-import json
 import pandas as pd
 from tqdm import tqdm
 import os
@@ -323,7 +322,7 @@ def exportCSV (data, dataframe, message):
 
     name = f"../out/{directory_name}/{data}.csv"
 
-    dataframe.to_csv (name, index=False)
+    dataframe.to_csv (name, index=False,encoding='utf-8')
 
 def main (verbose, reset, specify, development, production): 
 
