@@ -4,3 +4,4 @@ crawler/src/.DS_store
 /crawler/in/*
 /crawler/src/__pycache__/
 /crawler/clean/*
+/dataset/*

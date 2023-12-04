@@ -1,27 +1,27 @@
 def development (): 
     params = {
 
-        "wine_type_ids[]": "1", 
+        "wine_type_ids[]": ["1", "2"],
         "country_codes[]":"it",
 
         "min_rating" : "4.2",
         "price_range_max": "9",
         } 
 
-    languageList = ["it"]
+    languageList = ["it", "en"]
 
     return params, languageList
 
 def production (): 
     params = {
 
-        "wine_type_ids[]": "1",
-        "country_codes[]":"it",
+        "wine_type_ids[]": ["1", "2", "3", "4", "7", "24"],
+        "country_codes[]": ["it", "fr"],
 
-        "min_rating" : "4.2",
+        "min_rating" : "4.0",
         "price_range_max": "150",
         } 
 
-    languageList = ["it"]
+    languageList = ["it", "fr", "de", "en"]
 
     return params, languageList

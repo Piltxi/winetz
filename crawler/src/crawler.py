@@ -245,8 +245,10 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
                 for r in d["reviews"]:
                     if r["language"] not in selectedLanguages:
                         continue
-                    
 
+                    if len(r['note']) < 100:
+                        continue
+                
                     reviewsData = [
                         (   
                             r["id"],
@@ -271,10 +273,7 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
             
             if not verbose: 
                 progress_bar.update(1)
-                #progress_bar.set_postfix({'len': len(mainratings_dataframe)})
                 progress_bar.set_postfix(rev = len(mainratings_dataframe), refresh=True)
-                #progress_bar.set_postfix([str(len(mainratings_dataframe))])
-
 
         
         if not verbose: 
