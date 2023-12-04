@@ -1,7 +1,8 @@
 .DS_store
-crawler/src/.DS_store
+/crawler/src/.DS_store
 /crawler/out/*
 /crawler/in/*
 /crawler/src/__pycache__/
 /crawler/clean/*
 /dataset/*
+/in/*
