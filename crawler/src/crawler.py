@@ -223,7 +223,7 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
     if verbose: 
         print ("Start reviews crawling...\n")
     
-    mainratings_dataframe = pd.DataFrame(columns=["idRev", "Year", "idWine", "User Rating", "Note", "CreatedAt"])
+    mainratings_dataframe = pd.DataFrame(columns=["idRev", "idWine", "User Rating", "Note", "CreatedAt"])
 
     if not verbose: 
         iteraBar = len (wineDF) #{desc}{percentage:3.0%}{bar} {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]
@@ -252,7 +252,7 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
                     reviewsData = [
                         (   
                             r["id"],
-                            row["Year"],
+                            # row["Year"],
                             row["ID"],
                             r["rating"],
                             r["note"],
@@ -262,7 +262,7 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
                     
                     reviewsData = pd.DataFrame(
                         reviewsData, 
-                        columns=["idRev", "Year", "ID", "User Rating", "Note", "CreatedAt"]
+                        columns=["idRev", "ID", "User Rating", "Note", "CreatedAt"]
                     )
 
                     if not mainratings_dataframe.empty:
