@@ -1,0 +1,14 @@
+{
+    "wine_parameters": {
+        "wine_type_ids[]": [
+            "1",
+            "2"
+        ],
+        "country_codes[]": "it",
+        "min_rating": "4.2",
+        "price_range_max": "9"
+    },
+    "languages": [
+        "it"
+    ]
+}
