@@ -1,14 +1,15 @@
 def development (): 
     params = {
 
-        "wine_type_ids[]": ["1", "2"],
+        "wine_type_ids[]": "1",
         "country_codes[]":"it",
 
         "min_rating" : "4.2",
         "price_range_max": "9",
+
         } 
 
-    languageList = ["it", "en"]
+    languageList = ["it"]
 
     return params, languageList
 
@@ -20,6 +21,7 @@ def production ():
 
         "min_rating" : "4.0",
         "price_range_max": "150",
+        "price_range_min": "20"
         } 
 
     languageList = ["it", "fr", "de", "en"]
