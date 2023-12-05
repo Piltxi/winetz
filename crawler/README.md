@@ -56,6 +56,12 @@ WineTz allows you to specify filtering options for your search.
 ```
 python3 crawler.py -s
 ```
+WineTz will load the search parameters from a file in the *input/* directory.
+If nothing is entered, WineTz loads the parameters from the */input/parameters.json* file. <br>
+**Important:** <br> Format of the file to attach is that of the file automatically exported during scraping: */out/parameters.json*
+```
+python3 crawler.py -f
+```
 WineTz prints additional information while running. **This option is useful and recommended during debugging.**
 ```
 python3 crawler.py -v
@@ -70,10 +76,13 @@ python3 crawler.py -p
 When WineTz starts its tasks, it prints the number of matches obtained through requests to the *vivino.com* API.
 Afterwards, you will see a progress bar describing the progress of the review retrieval.
 
-WineTz creates an output folder */out*. Inside */out* create a directory for each exported dataset.
-Inside the *dataset directory*, WineTz exports three *.csv* files: wines, style and reviews.
+WineTz creates an output folder */out*. Inside */out* create a directory for each exported dataset.<br>
+Inside the *dataset directory*, WineTz exports three *.csv* files: wines, style and reviews:
 
 *wine.csv* contains information about wines <br> *style.csv* provides information on wine styles <br> *reviews.csv* the reviews of each wine.
+
+Automatically, a fourth *.json* file is created: *parameters.json*.<br>
+This file contains the parameters used for scraping. By copying this file to the *crawler/input/*, you can scrape with the same search parameters.
 
 Happy scraping!
 
