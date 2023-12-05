@@ -2,13 +2,10 @@ import argparse
 import requests
 import pandas as pd
 from tqdm import tqdm
-import os
-import subprocess
 from datetime import datetime
-import json
 
-import command
-from checkCrawler import resetInfo, checkWineTz
+from crawio import * 
+from checkCrawler import *
 
 def getWine (wine_id, year, page):
     headers = {
@@ -19,64 +16,13 @@ def getWine (wine_id, year, page):
     data = requests.get(api_url, headers=headers).json()
 
     return data
-
-def inputParameters (verbose, specify, development, production): 
-
-    if production: 
-        return command.production()
-
-    if development: 
-        return command.development()
-
-    info_requested = ['countries', 'minimum rating', 'maximum price', 'minimum price', 'type']
-    wine_info = {}
-    languageList = []
-
-    if specify: 
-        print ("Enter the following parameters (press Enter to skip):")
-        for item in info_requested:
-            
-            user_input = input(f"Type wine {item}> ").strip()
-            wine_info[item] = user_input
-
-        selectedLanguages = input(f"Type the language codes for retrieving reviews> ").strip()
-        languageList = selectedLanguages.split()
-
-
-    params = {
-
-        "wine_type_ids[]": wine_info.get('type', '').split() if wine_info.get('type') else "1",
-        "country_codes[]": wine_info.get('countries', '').split() if wine_info.get('countries') else "it",
-
-        "min_rating" :  wine_info.get('minimum ratinge') or "1",
-        "price_range_min": wine_info.get('minimum price') or "10",
-        "price_range_max": wine_info.get('maximum price') or "250",
-    }
-
-    checkWineTz (1, [params["price_range_min"], params["price_range_max"]])
-
-    if languageList is None: 
-        languageList.append ("en")
-        languageList.append ("it")
-
-
-    if verbose: 
-        for key, value in params.items():
-            print(f"{key}: {value}")
-        print ("Selected Languages: ")
-        for item in languageList: 
-            print (f"{item} ", end='')
-        print ("\n")
-
-    return (params, languageList)
-    
+  
 def wineCrawler (verbose, wineParameters): 
 
     try: 
         if verbose: 
             print ("Wine parameters loaded for scraping process:")
-            for key, value in wineParameters.items():
-                print(f"{key}: {value}")
+            printParameters(wineParameters, [None])
 
         # First request (reading number of matches obtained)
         req = requests.get(
@@ -94,7 +40,7 @@ def wineCrawler (verbose, wineParameters):
 
         wineStyleID = set ()
     
-        mainwine_dataframe = pd.DataFrame(columns=["ID", "Winery", "Name", "Year", "Style", "Rating", "Rates count", "Type", "Price"]) 
+        mainwine_dataframe = pd.DataFrame(columns=["ID", "Winery", "Name", "Year", "StyleID", "Rating", "Rates count", "Type", "Price"]) 
         mainstyle_dataframe = pd.DataFrame(columns=["ID", "Region", "Description", "Nation"]) 
 
         if verbose: 
@@ -121,34 +67,20 @@ def wineCrawler (verbose, wineParameters):
 
             #!TODO getting alchol gradation
 
+            # To print the json structure:
             """"
-            #Questo code stampa la struttura del json
             all_wines_data = rew.json()["explore_vintage"]["matches"]
             print (json.dumps(all_wines_data[0], indent=4))
-            #for i in range (len(all_wines_data)): 
-                #print(json.dumps(all_wines_data[i], indent=4))
+            for i in range (len(all_wines_data)): 
+                print(json.dumps(all_wines_data[i], indent=4))
             
             quit()
-            """
-            
-            """
-            results = [
-                (
-                    Winery -> t["vintage"]["wine"]["winery"]["name"],
-                    Year -> t["vintage"]["year"],
-                    ID -> t["vintage"]["wine"]["id"],
-                    WINE -> f'{t["vintage"]["wine"]["name"]} {t["vintage"]["year"]}',
-                    RATING -> t["vintage"]["statistics"]["ratings_average"],
-                    RATE COUNT -> t["vintage"]["statistics"]["ratings_count"]
-                )
-                for t in rew.json()["explore_vintage"]["matches"]
-            ]
             """
 
             for t in rew.json()["explore_vintage"]["matches"]: 
                 
+                # Acquisition of wine style:
                 styleID = t["vintage"]["wine"]["style"]["id"]
-
                 if styleID not in wineStyleID: 
                     wineStyleID.add(styleID)
 
@@ -159,13 +91,13 @@ def wineCrawler (verbose, wineParameters):
                         t["vintage"]["wine"]["style"]["country"]["code"]
                         )
                     ]
-
                     styleDataframe = pd.DataFrame(
                         styleData,
                         columns=["ID", "Region", "Description", "Nation"]
                     ) 
                     mainstyle_dataframe = pd.concat([mainstyle_dataframe, styleDataframe], ignore_index=True)
 
+                # Wine data acquisition:
                 wineData = [ (
                         t["vintage"]["wine"]["id"],
                         t["vintage"]["wine"]["winery"]["name"],
@@ -179,12 +111,10 @@ def wineCrawler (verbose, wineParameters):
                         # alchol gradation)
                         )
                 ]
-
                 wineData = pd.DataFrame(
                     wineData,
                     columns=["ID", "Winery", "Name", "Year", "Style", "Rating", "Rates count", "Type", "Price"],
                 )
-
 
                 if not mainwine_dataframe.empty:
                     mainwine_dataframe = pd.concat([mainwine_dataframe, wineData], ignore_index=True)
@@ -223,10 +153,10 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
     if verbose: 
         print ("Start reviews crawling...\n")
     
-    mainratings_dataframe = pd.DataFrame(columns=["idRev", "idWine", "User Rating", "Note", "CreatedAt"])
+    mainratings_dataframe = pd.DataFrame(columns=["idRev", "Language", "idWine", "User Rating", "Note", "CreatedAt"])
 
     if not verbose: 
-        iteraBar = len (wineDF) #{desc}{percentage:3.0%}{bar} {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]
+        iteraBar = len (wineDF)
         progress_bar = tqdm(total=iteraBar, desc="]singing: ", unit="wine", position=0, dynamic_ncols=True, bar_format="{desc}{percentage:3.0f}%|{bar}  {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {postfix}]")
     try: 
         for _, row in wineDF.iterrows():
@@ -239,7 +169,10 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
                 d = getWine(row["ID"], row["Year"], page)
 
                 if not d["reviews"]:
-                    progress_bar.set_description(f"]singing") 
+                    
+                    if not verbose:
+                        progress_bar.set_description(f"]singing") 
+                    
                     break
 
                 for r in d["reviews"]:
@@ -252,7 +185,7 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
                     reviewsData = [
                         (   
                             r["id"],
-                            # row["Year"],
+                            r["language"],
                             row["ID"],
                             r["rating"],
                             r["note"],
@@ -262,7 +195,7 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
                     
                     reviewsData = pd.DataFrame(
                         reviewsData, 
-                        columns=["idRev", "ID", "User Rating", "Note", "CreatedAt"]
+                        columns=["idRev", "Language", "idWine", "User Rating", "Note", "CreatedAt"]
                     )
 
                     if not mainratings_dataframe.empty:
@@ -291,46 +224,15 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
 
     return mainratings_dataframe
 
-def exportCSV (data, dataframe, message): 
-
-    #* path directory definition
-    directory_name = "../out"
-
-    if not os.path.exists(directory_name):
-        try:
-            os.makedirs(directory_name)
-        except subprocess.CalledProcessError as e:
-            print(f"Error in creating the directory: {e}")
-
-    currentData = datetime.now().strftime("%d.%m")
-    directory_name = f"../out/out {currentData}"
-
-    if not os.path.exists(directory_name):
-        try:
-            os.makedirs(directory_name)
-        except subprocess.CalledProcessError as e:
-            print(f"Error in creating second directory: {e}")
-
-    directory_name = f"../out/out {currentData}/dataset {message}"
-
-    if not os.path.exists(directory_name):
-        try:
-            os.makedirs(directory_name)
-        except subprocess.CalledProcessError as e:
-            print(f"Error in creating second directory: {e}")
-
-    name = f"../out/{directory_name}/{data}.csv"
-
-    dataframe.to_csv (name, index=False,encoding='utf-8')
-
-def main (verbose, reset, specify, development, production): 
+def main (verbose, reset, specify, development, production, file): 
 
     if reset: 
         resetInfo()
-    
+
     currentTime = datetime.now().strftime("%H.%M")
     
-    (wineParameters, selectedLanguages) = inputParameters (verbose, specify, development, production)
+    (wineParameters, selectedLanguages) = inputParameters (verbose, specify, development, production, file)
+    exportParameters(wineParameters, selectedLanguages, currentTime, verbose)
 
     wineDF, styleDF = wineCrawler (verbose, wineParameters)
 
@@ -352,14 +254,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WineTz v.1")
     parser.add_argument("-d", "--development", action="store_true", help="debug function for developer")
     parser.add_argument("-s", "--specify", action="store_true", help="specify filter for wine search")
+    parser.add_argument("-f", "--file", action="store_true", help="load filter for wine search from file")
     parser.add_argument("-p", "--production", action="store_true", help="production")
     parser.add_argument("-v", "--verbose", action="store_true", help="additional prints")
     parser.add_argument("-r", "--reset", action="store_true", help="reset directory out/")
 
     args = parser.parse_args()
 
-    if not (args.development or args.specify or args.production or args.reset):
+    if not (args.development or args.specify or args.production or args.reset or args.file):
         parser.print_help()
         checkWineTz(0, "options")
 
-    main(args.verbose, args.reset, args.specify, args.development, args.production)
+    main(args.verbose, args.reset, args.specify, args.development, args.production, args.file)
