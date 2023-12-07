@@ -25,8 +25,6 @@ Whether you're a wine enthusiast, a sommelier, or a data-driven marketer, our en
 
 ### Prerequisites
 
-### Installing
-
 ## 🎈 Usage <a name="usage"></a>
 
 ## 🚀 Deployment <a name = "deployment"></a>
