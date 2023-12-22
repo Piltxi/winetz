@@ -60,7 +60,8 @@ merged_df -> idRev,Language,User Rating,Note,CreatedAt,wine_ID,wine_Winery,wine_
 
 """
 
-def ultima (df):
+def setHierarchy (df):
+    
     gType = df.groupby('wine_Type')
     lType = []
 
@@ -71,7 +72,6 @@ def ultima (df):
         for styleName, styleGroup in gStyle:
             lWines = []
 
-            # Raggruppa per wine_ID all'interno del gruppo style_ID
             gWines = styleGroup.groupby('wine_ID')
 
             for wineName, wineGroup in gWines:
@@ -131,6 +131,10 @@ def loadStructure (path, directory_name, currentTime):
     wine_df = pd.read_csv(f'{path}/wine.csv')
     style_df = pd.read_csv(f'{path}/style.csv')
 
+    reviews_df = reviews_df.fillna('')
+    wine_df = wine_df.fillna('')
+    style_df = style_df.fillna('')
+
     wine_df = wine_df.add_prefix('wine_')
     style_df = style_df.add_prefix('style_')
 
@@ -138,20 +142,18 @@ def loadStructure (path, directory_name, currentTime):
     merged_df = pd.merge(merged_df, style_df, left_on='wine_Style', right_on='style_ID', how='inner')
     merged_df.drop(['idWine', 'wine_Style'], axis=1, inplace=True)
 
-    dfJSON = ultima(merged_df)
+    dfJSON = setHierarchy (merged_df)
     
     nameFile = f'dataset {currentTime}.json'
     outPath = directory_name + nameFile
     with open(outPath, 'w', encoding='utf-8') as json_file:
         json.dump(dfJSON, json_file, indent=2, ensure_ascii=False)
-
     print(f"Results [JSON] exported in 'dataset/{nameFile}'.")
 
     nameFile = f'dataset {currentTime}.csv'
     outPath = directory_name + nameFile
     merged_df.to_csv(outPath, index = False)
     print(f"Results [CSV] exported in 'dataset/{nameFile}'.")
-
 
 def resetDataset():
     if os.path.exists("dataset/"):
