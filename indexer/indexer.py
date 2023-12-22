@@ -11,17 +11,29 @@ from whoosh.qparser import QueryParser
 from sentimentAnalyis import setSentiment, initClassifier
 
 def resetIndex():
+
+    '''
+        resetIndex is used to delete the output folder; this is useful for cleaning up the repo directory
+    '''
+
     if os.path.exists("../index"):
         try:
             subprocess.run(["rm", "-fr", "../index"], check=True)
         except subprocess.CalledProcessError as e:
             print(f"Error in removing the existing directory: {e}")
 
-    print("Reset index folder")
+    print("Reset index folder successfully.")
     quit()
 
 def loadJSON (inputPath):
     
+    '''
+        loadJSON is used to load data from the dataset.json file.
+        It was initially a method of the class.
+        The specific function would not be necessary, but it is found here for possible debugging operations.
+        - inputPath: path of inputh dataset.json
+    '''
+
     with open(inputPath, "r", encoding="utf-8") as json_file:
         data = json.load(json_file)
 
@@ -47,6 +59,17 @@ if __name__ == '__main__':
                 print(f"Error in creating the directory: {e}")
 
     datas = loadJSON (inputPath)
+
+    '''
+        args.offline parameter is useful for performing sentiment analysis with pre-downloaded models.
+        This works if the models have been downloaded to the /models directory and match those specified in the sentimentAnalysis.py module. 
+        
+        initClassifier initializes the methods to perform sentiment analysis.
+        sentiment analysis is implemented in English and Italian.
+
+        sentiment analysis is implemented on a separate 
+        module so you can change the specific implementation without changing the indexer
+    '''
 
     classifierIT, classifierEN = initClassifier (args.offline)
 
@@ -90,6 +113,12 @@ if __name__ == '__main__':
     
     writer.commit()
 
+    '''
+        The following lines represent an example of how to formulate a query to the search engine. 
+        In this way, the query is formulated on multiple fields (MultifieldParser).
+        This represents example and debug code only.
+    '''
+
     searcher = ix.searcher()
     
     search_field = ["wine_name", "style_description", "review_note", "wine_winery"]
@@ -99,7 +128,7 @@ if __name__ == '__main__':
     query = query_parser.parse(query_string)
     results = searcher.search(query)
 
-    print("Risultati della ricerca:")
+    print("Search results:")
     for i, result in enumerate(results):
         print(i, "] ",result["wine_name"], "\n\n",result["review_note"], "\n\n", f"sentiment: {result['sentiment']}")
 

@@ -3,6 +3,11 @@ from transformers import pipeline
 
 def setSentiment (content, language, classifierIT, classifierEN): 
 
+    '''
+        setSentiment returns the various scores of the sentiment analysis. 
+        the method is implemented separately in order to correctly handle the library output.
+    '''
+
     if language == 'it':
         result = classifierIT (content)
 
@@ -17,10 +22,15 @@ def setSentiment (content, language, classifierIT, classifierEN):
 
         return result [0]['label']
 
-    print (f"An error occurred during the sentiment analysis process. Language detected: {language}")
+    print (f"An error occurred during the sentiment analysis process: language detected: {language}")
     quit()
 
 def initClassifier (offlineFlag): 
+
+    '''
+        initClassifier is used to specify the classifiers to perform sentiment analysis
+        - offlineFlag:  useful when loading downloaded modules.
+    '''
 
     if offlineFlag: 
 

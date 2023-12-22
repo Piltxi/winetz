@@ -62,6 +62,15 @@ merged_df -> idRev,Language,User Rating,Note,CreatedAt,wine_ID,wine_Winery,wine_
 
 def setHierarchy (df):
     
+    """
+        setHierarchy is used to create the hierarchical data structure to be written to the .json file.
+        - df is the pandas dataframe obtained from the csv files created by the web crawler.
+
+        Returns:
+            output_json: complex data structure, including dictionaries with all the data:
+            typologies, wine styles, wines and reviews.
+    """    
+
     gType = df.groupby('wine_Type')
     lType = []
 
@@ -121,6 +130,13 @@ def setHierarchy (df):
 
 def loadStructure (path, directory_name, currentTime):  
 
+    """
+        loadStructure implements join functionality between the csv files obtained by the crawler to obtain all the data after the merge.
+        - path: path of the csv files downloaded by the web crawler
+        - directory_name: output dataset path
+        - currentTime: time of the current operation, useful for distinguishing more datasets
+    """    
+
     if not os.path.exists(directory_name):
         try:
             os.makedirs(directory_name)
@@ -131,6 +147,7 @@ def loadStructure (path, directory_name, currentTime):
     wine_df = pd.read_csv(f'{path}/wine.csv')
     style_df = pd.read_csv(f'{path}/style.csv')
 
+    # filling null fields with empty strings
     reviews_df = reviews_df.fillna('')
     wine_df = wine_df.fillna('')
     style_df = style_df.fillna('')
@@ -144,25 +161,37 @@ def loadStructure (path, directory_name, currentTime):
 
     dfJSON = setHierarchy (merged_df)
     
+    #* JSON export
     nameFile = f'dataset {currentTime}.json'
     outPath = directory_name + nameFile
     with open(outPath, 'w', encoding='utf-8') as json_file:
         json.dump(dfJSON, json_file, indent=2, ensure_ascii=False)
     print(f"Results [JSON] exported in 'dataset/{nameFile}'.")
 
+
+    #* CSV export
+    ''' the following lines are useful for debugging.
+        in production you can comment. 
+        They are used to generate a standard csv file with the data after performing the merge.  
+    '''
     nameFile = f'dataset {currentTime}.csv'
     outPath = directory_name + nameFile
     merged_df.to_csv(outPath, index = False)
     print(f"Results [CSV] exported in 'dataset/{nameFile}'.")
 
 def resetDataset():
+
+    '''
+        resetDataset is used to delete the output folder; this is useful for cleaning up the repo directory
+    '''
+
     if os.path.exists("dataset/"):
         try:
             subprocess.run(["rm", "-fr", "dataset"], check=True)
         except subprocess.CalledProcessError as e:
             print(f"Error in removing the existing directory: {e}")
 
-    print("Reset dataset folder")
+    print("Reset dataset folder successfully.")
     quit()
 
 if __name__ == '__main__':
