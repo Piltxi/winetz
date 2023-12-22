@@ -251,7 +251,7 @@ def main (verbose, reset, specify, development, production, file):
 
 if __name__ == "__main__":
     
-    parser = argparse.ArgumentParser(description="WineTz v.1")
+    parser = argparse.ArgumentParser(description="WineTz Crawler v.2")
     parser.add_argument("-d", "--development", action="store_true", help="debug function for developer")
     parser.add_argument("-s", "--specify", action="store_true", help="specify filter for wine search")
     parser.add_argument("-f", "--file", action="store_true", help="load filter for wine search from file")
