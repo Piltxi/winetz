@@ -2,10 +2,14 @@
 /crawler/src/.DS_store
 /crawler/out/*
 /crawler/in/*
+/crawler/input/*
 /crawler/src/__pycache__/
 /crawler/clean/*
 /dataset/*
 /in/*
-/index_directory/*
-/try/
-/indexer/*
+/data/dataset/*
+/data/input/*
+/models/*
+/index/*
+/dataTry/*
+/indexer/__pycache__/
