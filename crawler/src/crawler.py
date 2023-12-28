@@ -108,7 +108,7 @@ def wineCrawler (verbose, wineParameters):
                         t["vintage"]["statistics"]["ratings_count"],
                         t["vintage"]["wine"]["type_id"],
                         t["price"]["amount"]
-                        # alchol gradation)
+                        # alchol gradation
                         )
                 ]
                 wineData = pd.DataFrame(
