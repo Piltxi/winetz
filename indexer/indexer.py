@@ -2,11 +2,13 @@ import os
 import subprocess
 import argparse
 import json
+from tqdm import tqdm
 
 from whoosh.fields import *
 from whoosh.index import create_in
 from whoosh.qparser import MultifieldParser
 from whoosh.qparser import QueryParser
+from whoosh.analysis import LanguageAnalyzer
 
 from sentimentAnalyis import setSentiment, initClassifier
 
@@ -71,46 +73,54 @@ if __name__ == '__main__':
         module so you can change the specific implementation without changing the indexer
     '''
 
+    itAnalyzer = LanguageAnalyzer('it', cachesize=-1)
     classifierIT, classifierEN = initClassifier (args.offline)
 
     schema = Schema(
         wine_type=TEXT(stored=True),
         style_description=TEXT(stored=True),
-        wine_name=TEXT(stored=True),
+        wine_name=TEXT(stored=True, analyzer=itAnalyzer),
         user_rating=NUMERIC(float, stored=True),
-        review_note=TEXT(stored=True),
+        review_note=TEXT(stored=True, analyzer=itAnalyzer),
         created_at=TEXT(stored=True),
-        wine_winery=TEXT(stored=True),
+        wine_winery=TEXT(stored=True, analyzer=itAnalyzer),
         wine_year=NUMERIC(int, stored=True),
         wine_rating_count=NUMERIC(int, stored=True),
         sentiment=TEXT(stored=True)
     )
 
     ix = create_in(indexPath, schema)
-    writer = ix.writer()
-
-    for wine_type in datas["wine_types"]:
-        for style in wine_type["styles"]:
-            for wine in style["wines"]:
-                for review in wine["reviews"]:
-                    
-                    sentiment = setSentiment (review["Note"], review["Language"], classifierIT, classifierEN)
-                    
-                    doc = {
-                        "wine_type": str(wine_type["wine_Type"]),
-                        "style_description": style["style_Description"],
-                        "wine_name": wine["wine_Name"],
-                        "user_rating": float(review["User_Rating"]),
-                        "review_note": review["Note"],
-                        "created_at": review["CreatedAt"],
-                        "wine_winery": wine["wine_Winery"],
-                        "wine_year": wine["wine_Year"],
-                        "wine_rating_count": wine["wine_Rates_count"],
-                        "sentiment": sentiment
-                    }
-                    
-                    writer.add_document(**doc)
     
+    ix = create_in(indexPath, schema)
+    writer = ix.writer(procs=4, limitmb=64, multisegment=True)
+
+    total_documents = sum(len(wine["reviews"]) for wine_type in datas["wine_types"] for style in wine_type["styles"] for wine in style["wines"])
+    
+    with tqdm(total=total_documents, desc="Indicizzazione") as pbar:
+        for wine_type in datas["wine_types"]:
+            for style in wine_type["styles"]:
+                    for wine in style["wines"]:
+                            for review in wine["reviews"]:
+                                
+                                sentiment = setSentiment (review["Note"], review["Language"], classifierIT, classifierEN)
+                                
+                                doc = {
+                                    "wine_type": str(wine_type["wine_Type"]),
+                                    "style_description": style["style_Description"],
+                                    "wine_name": wine["wine_Name"],
+                                    "user_rating": float(review["User_Rating"]),
+                                    "review_note": review["Note"],
+                                    "created_at": review["CreatedAt"],
+                                    "wine_winery": wine["wine_Winery"],
+                                    "wine_year": wine["wine_Year"],
+                                    "wine_rating_count": wine["wine_Rates_count"],
+                                    "sentiment": sentiment
+                                }
+                                
+                                writer.add_document(**doc)
+                                pbar.update(1)
+
+    print("Committing final changes...")
     writer.commit()
 
     '''
@@ -120,16 +130,19 @@ if __name__ == '__main__':
     '''
 
     searcher = ix.searcher()
-    
+
     search_field = ["wine_name", "style_description", "review_note", "wine_winery"]
     query_parser = MultifieldParser(search_field, ix.schema)
 
-    query_string = "rosso intenso"
-    query = query_parser.parse(query_string)
-    results = searcher.search(query)
+    while True:
+        print ("Digita la tua query> ")
+        query_string = input()
+        # query_string = "rosso intenso"
+        query = query_parser.parse(query_string)
+        results = searcher.search(query)
 
-    print("Search results:")
-    for i, result in enumerate(results):
-        print(i, "] ",result["wine_name"], "\n\n",result["review_note"], "\n\n", f"sentiment: {result['sentiment']}")
+        print("Search results:")
+        for i, result in enumerate(results):
+            print(i, "] ",result["wine_name"], "\n\n",result["review_note"], "\n\n", f"sentiment: {result['sentiment']}")
 
     searcher.close()
