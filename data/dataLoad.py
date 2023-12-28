@@ -60,6 +60,24 @@ merged_df -> idRev,Language,User Rating,Note,CreatedAt,wine_ID,wine_Winery,wine_
 
 """
 
+def valueTypeConverter (input, type):
+
+    if type == "int": 
+        try: 
+            output = int (input)
+        except ValueError: 
+            print (f"] reported error: converting \"{input}\" into integer value")
+            output = 1
+
+    if type == "float": 
+        try: 
+            output = float (input)
+        except ValueError: 
+            print (f"] reported error: converting \"{input}\" into float value")
+            output = 1
+
+    return output
+
 def setHierarchy (df):
     
     """
@@ -95,20 +113,25 @@ def setHierarchy (df):
                     }
                     reviews.append(review_data)
 
+                id = valueTypeConverter(row['wine_ID'], "int")
+                year = valueTypeConverter(row['wine_Year'], "int")
+                price = valueTypeConverter(row['wine_Price'], "float")
+
                 wine_data = {
-                    "wine_ID": int(row['wine_ID']),
+                    "wine_ID": id,
                     "wine_Winery": row['wine_Winery'],
                     "wine_Name": row['wine_Name'],
-                    "wine_Year": int(row['wine_Year']),
+                    "wine_Year": year,
                     "wine_Rating": row['wine_Rating'],
                     "wine_Rates_count": row['wine_Rates count'],
-                    "wine_Price": row['wine_Price'],
+                    "wine_Price": price,
                     "reviews": reviews
                 }
                 lWines.append(wine_data)
 
+            id = valueTypeConverter(styleName, "int")
             style_data = {
-                "style_ID": int(styleName),
+                "style_ID": id,
                 "style_Region": wineGroup['style_Region'].iloc[0],
                 "style_Description": wineGroup['style_Description'].iloc[0],
                 "style_Nation": wineGroup['style_Nation'].iloc[0],
@@ -116,8 +139,9 @@ def setHierarchy (df):
             }
             lStyle.append(style_data)
 
+        id = valueTypeConverter(typeName, "int")
         type_data = {
-            "wine_Type": int(typeName),
+            "wine_Type": id,
             "styles": lStyle
         }
         lType.append(type_data)
@@ -143,6 +167,13 @@ def loadStructure (path, directory_name, currentTime):
         except subprocess.CalledProcessError as e:
             print(f"Error in creating the directory: {e}")
 
+    subDirectoryArchive = directory_name + "archive/"
+    if not os.path.exists(subDirectoryArchive):
+        try:
+            os.makedirs(subDirectoryArchive)
+        except subprocess.CalledProcessError as e:
+            print(f"Error in creating the directory: {e}")
+
     reviews_df = pd.read_csv(f'{path}/reviews.csv')
     wine_df = pd.read_csv(f'{path}/wine.csv')
     style_df = pd.read_csv(f'{path}/style.csv')
@@ -155,19 +186,36 @@ def loadStructure (path, directory_name, currentTime):
     wine_df = wine_df.add_prefix('wine_')
     style_df = style_df.add_prefix('style_')
 
+    '''print ("Reviews counter: ", len(reviews_df))
+    reviews_df = reviews_df.drop_duplicates(subset=['Note', 'idWine'])
+    print ("Reviews counter: ", len(reviews_df))
+    reviews_df = reviews_df.drop_duplicates(subset=['Note'])
+    print ("Reviews counter: ", len(reviews_df))
+    quit()'''
+
+    reviews_df = reviews_df.drop_duplicates(subset=['Note', 'idWine'])
+    
+    reviews_df = reviews_df[reviews_df['Language'] != 'en']
+
     merged_df = pd.merge(reviews_df, wine_df, left_on='idWine', right_on='wine_ID', how='inner')
     merged_df = pd.merge(merged_df, style_df, left_on='wine_Style', right_on='style_ID', how='inner')
     merged_df.drop(['idWine', 'wine_Style'], axis=1, inplace=True)
 
     dfJSON = setHierarchy (merged_df)
     
-    #* JSON export
+    #* JSON export [archive]
     nameFile = f'dataset {currentTime}.json'
+    outPath = subDirectoryArchive + nameFile
+    with open(outPath, 'w', encoding='utf-8') as json_file:
+        json.dump(dfJSON, json_file, indent=2, ensure_ascii=False)
+    print(f"Results [JSON] exported in {outPath}'.")
+
+    #* JSON export [production]
+    nameFile = f'dataset.json'
     outPath = directory_name + nameFile
     with open(outPath, 'w', encoding='utf-8') as json_file:
         json.dump(dfJSON, json_file, indent=2, ensure_ascii=False)
-    print(f"Results [JSON] exported in 'dataset/{nameFile}'.")
-
+    print(f"Results [JSON] exported in {outPath}.")
 
     #* CSV export
     ''' the following lines are useful for debugging.
@@ -175,9 +223,9 @@ def loadStructure (path, directory_name, currentTime):
         They are used to generate a standard csv file with the data after performing the merge.  
     '''
     nameFile = f'dataset {currentTime}.csv'
-    outPath = directory_name + nameFile
+    outPath = subDirectoryArchive + nameFile
     merged_df.to_csv(outPath, index = False)
-    print(f"Results [CSV] exported in 'dataset/{nameFile}'.")
+    print(f"Results [CSV] exported in {outPath}.")
 
 def resetDataset():
 
