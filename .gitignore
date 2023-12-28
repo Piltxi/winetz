@@ -13,3 +13,7 @@
 /index/*
 /dataTry/*
 /indexer/__pycache__/
+/searcher/in/*
+/index_backup/*
+/data/inputdev/*
+/searcher/static/in/*
