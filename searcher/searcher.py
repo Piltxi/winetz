@@ -101,12 +101,15 @@ def loadGUI (ix):
         col_num = i % 2
         Checkbutton(typeBar, text=wine_type, variable=check_vars[i]).grid(row=row_num, column=col_num, padx=5, pady=3, sticky="w")
 
-    #* BAR: Price
+    #* BAR: Price and Year
     priceBar = Frame(left_frame, width=180, height=185, bg="#e3cf87")
     priceBar.grid(row=3, column=0, padx=5, pady=5, sticky="n")
     Label(priceBar, text="Price", relief="raised").grid(row=0, column=0, padx=5, pady=5, sticky="w")
     Entry(priceBar, width=4).grid(row=0, column=1, padx=5, pady=2, sticky="w")
     Entry(priceBar, width=4).grid(row=0, column=2, padx=5, pady=2, sticky="w")
+    Label(priceBar, text="Year", relief="raised").grid(row=0, column=3, padx=5, pady=5, sticky="w")
+    Entry(priceBar, width=4).grid(row=0, column=4, padx=5, pady=2, sticky="w")
+
 
     #* BAR: Sentiment
     sentimentBar = Frame(left_frame, width=180, height=185, bg="#fdf7d5")
