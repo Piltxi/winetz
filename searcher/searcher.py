@@ -4,9 +4,8 @@ import argparse
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
-from tkinter import Tk, Frame, Label, Button, Entry, Checkbutton, IntVar, scrolledtext, PhotoImage
-
-from tkinter import IntVar
+from tkinter import Tk, Frame, Label, Button, Entry, Checkbutton, scrolledtext, PhotoImage
+from tkinter import StringVar, IntVar, DoubleVar
 
 from whoosh.index import open_dir
 from whoosh.qparser import MultifieldParser
@@ -14,7 +13,6 @@ from whoosh.query import And, AndNot, Not, AndMaybe, Term
 
 from correctionsAnalysis import *
 from searcherIO import loadIndex, queryReply
-
 
 def update_selection():
     selected_numbers = [number_mapping[wine_type] for wine_type, var in zip(wine_types, check_vars) if var.get() == 1]
@@ -30,14 +28,6 @@ def loadIndexGUI ():
 def exportReport (): 
 
     outputPath = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
-
-def search_and_display_results(ix, query_string, search_field=["wine_name", "style_description", "review_note", "wine_winery"]):
-    searcher = ix.searcher()
-    query_parser = MultifieldParser(search_field, ix.schema)
-    query = query_parser.parse(query_string)
-    results = searcher.search(query)
-   
-    return results
 
 def loadGUI (ix): 
 
@@ -55,22 +45,32 @@ def loadGUI (ix):
         thesaurusFlag = False
         correctionFlag = False
         wineType = ["1", "2"]
-        
-        yearV = yearEntry.get() if yearEntry.get() else None
+    
 
-        print ("YYYY : ", yearV)
+        yearV = yearEntry.get()
+        yearV = int(yearV) if yearV.strip() else None
+
+        minPV = minPriceEntry.get()
+        minPV = float(minPV) if minPV.strip() else None
+
+        MaxPV = maxPriceEntry.get()
+        MaxPV = float(MaxPV) if MaxPV.strip() else None
+
+        # minPV = minPriceEntry.get() if minPriceEntry.get() else None
+        # MaxPV = maxPriceEntry.get() if maxPriceEntry.get() else None
+        
+        if minPV == None and MaxPV == None:
+            priceInterval = None 
+        else:
+            priceInterval = [minPV, MaxPV]
+
+        # print ("YYYY : ", yearV)
+        # print ("YYYY : ", minPV)
+        # print ("YYYY : ", MaxPV)
 
         parameters = searchField, priceInterval, wineType, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, yearV
-        qustion, results = queryReply (ix, parameters, query_string)
+        question, results = queryReply (ix, parameters, query_string)
 
-        result_text.delete(1.0, tk.END)
-        for i, result in enumerate(results):
-            result_text.insert(tk.END, f"{i + 1}] {result['wine_name']}\n\n{result['review_note']}\n\nSentiment: {result['sentiment']}\n\n")
-
-
-    def on_search_click():
-        query_string = queryText.get()
-        results = search_and_display_results(ix, query_string)
         result_text.delete(1.0, tk.END)
         for i, result in enumerate(results):
             result_text.insert(tk.END, f"{i + 1}] {result['wine_name']}\n\n{result['review_note']}\n\nSentiment: {result['sentiment']}\n\n")
@@ -122,10 +122,13 @@ def loadGUI (ix):
     priceBar = Frame(left_frame, width=180, height=185, bg="#e3cf87")
     priceBar.grid(row=3, column=0, padx=5, pady=5, sticky="n")
     Label(priceBar, text="Price", relief="raised").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-    Entry(priceBar, width=4).grid(row=0, column=1, padx=5, pady=2, sticky="w")
-    Entry(priceBar, width=4).grid(row=0, column=2, padx=5, pady=2, sticky="w")
     
-    yearEntry = IntVar()
+    minPriceEntry = StringVar ()
+    maxPriceEntry = StringVar ()
+    Entry(priceBar, width=4, textvariable=minPriceEntry).grid(row=0, column=1, padx=5, pady=2, sticky="w")
+    Entry(priceBar, width=4, textvariable=maxPriceEntry).grid(row=0, column=2, padx=5, pady=2, sticky="w")
+    
+    yearEntry = StringVar()
     Label(priceBar, text="Year", relief="raised").grid(row=0, column=3, padx=5, pady=5, sticky="w")
     Entry(priceBar, width=4, textvariable=yearEntry).grid(row=0, column=4, padx=5, pady=2, sticky="w")
 
@@ -162,6 +165,7 @@ def loadGUI (ix):
     Checkbutton(environmentBar, text="Th", variable=var).grid(row=0, column=2, padx=10, pady=5, sticky="w")
     Checkbutton(environmentBar, text="TF-IDF", variable=var).grid(row=0, column=3, padx=10, pady=5, sticky="w")
     Checkbutton(environmentBar, text="BM25F", variable=var).grid(row=0, column=4, padx=10, pady=5, sticky="w")
+    
     Button(environmentBar, text="index", width=5, highlightthickness=0, bd=0, command=loadIndexGUI).grid(row=0, column=5, padx=10, pady=5, sticky="w")
 
     #* Right Frame -> query and results
