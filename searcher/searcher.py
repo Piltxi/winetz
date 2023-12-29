@@ -14,7 +14,7 @@ def update_selection():
     selected_numbers = [number_mapping[wine_type] for wine_type, var in zip(wine_types, check_vars) if var.get() == 1]
     print("Selected numbers:", selected_numbers)
 
-def loadIndex ():
+def loadIndexCLI ():
 
     indexPath = input("Type the path to the index directory [or press enter]> ")
     indexPath = indexPath if indexPath else "../index"
@@ -29,25 +29,48 @@ def loadIndex ():
     
     return ix
 
-def loadGUI (): 
+def loadIndexGUI ():
+
+    inputPath = filedialog.askdirectory()
+    ix = open_dir(inputPath)
+
+    return ix
+
+def exportReport (): 
+
+    outputPath = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
+
+def search_and_display_results(ix, query_string, search_field=["wine_name", "style_description", "review_note", "wine_winery"]):
+    searcher = ix.searcher()
+    query_parser = MultifieldParser(search_field, ix.schema)
+    query = query_parser.parse(query_string)
+    results = searcher.search(query)
+   
+    return results
+
+def loadGUI (ix): 
+    def on_search_click():
+        query_string = queryText.get()
+        results = search_and_display_results(ix, query_string)
+        result_text.delete(1.0, tk.END)  # Clear previous results
+        for i, result in enumerate(results):
+            result_text.insert(tk.END, f"{i + 1}] {result['wine_name']}\n\n{result['review_note']}\n\nSentiment: {result['sentiment']}\n\n")
 
     #* main window config
     root = tk.Tk()
     
     root.title("wineTz")
     root.configure(bg="white")
+    root.minsize(850, 500)
+    root.maxsize(850, 500)
 
-    # root.geometry("850x250")
-    # root.minsize(850, 250)
-    # root.maxsize(850, 250)
-
-    top_frame = Frame(root, relief="solid", borderwidth=1, bg="white")
+    top_frame = Frame(root, relief="solid", borderwidth=0, bg="white")
     top_frame.pack(side="top", fill="both", expand=True)
     
-    left_frame = Frame(root, relief="solid", borderwidth=1, bg="DodgerBlue2")
+    left_frame = Frame(root, relief="solid", borderwidth=0, bg="DodgerBlue2")
     left_frame.pack(side="left", fill="both", expand=True)
 
-    right_frame = Frame(root, relief="solid", borderwidth=1, bg="lawn green")
+    right_frame = Frame(root, relief="solid", borderwidth=0, bg="lawn green")
     right_frame.pack(side="right", fill="both", expand=True)
 
     #* Image init
@@ -107,7 +130,7 @@ def loadGUI ():
 
     downBar = Frame(left_frame, width=180, height=185, bg="#d5833f", highlightthickness=0, bd=0)
     downBar.grid(row=6, column=0, padx=5, pady=5, sticky="n")
-    Button(downBar, text="export", width=5, highlightthickness=0, bd=0).grid(row=0, column=1, padx=10, pady=5, sticky="w")
+    Button(downBar, text="export", width=5, highlightthickness=0, bd=0, command=exportReport).grid(row=0, column=1, padx=10, pady=5, sticky="w")
     Button(downBar, text="refresh", width=5, highlightthickness=0, bd=0).grid(row=0, column=2, padx=10, pady=5, sticky="w")
     
     environmentBar = Frame(left_frame, width=180, height=185, bg="#420705",highlightthickness=0, bd=0)
@@ -116,17 +139,19 @@ def loadGUI ():
     Checkbutton(environmentBar, text="Th", variable=var).grid(row=0, column=2, padx=10, pady=5, sticky="w")
     Checkbutton(environmentBar, text="TF-IDF", variable=var).grid(row=0, column=3, padx=10, pady=5, sticky="w")
     Checkbutton(environmentBar, text="BM25F", variable=var).grid(row=0, column=4, padx=10, pady=5, sticky="w")
-    Button(environmentBar, text="index", width=5, highlightthickness=0, bd=0).grid(row=0, column=5, padx=10, pady=5, sticky="w")
+    Button(environmentBar, text="index", width=5, highlightthickness=0, bd=0, command=loadIndexGUI).grid(row=0, column=5, padx=10, pady=5, sticky="w")
 
     #* Right Frame -> query and results
-    Entry(right_frame, width=20).grid(row=0, column=0, padx=10, pady=5, sticky="e")
-    Button(right_frame, text="Search", width=10, highlightthickness=0, bd=0, command=update_selection).grid(row=0, column=1, padx=10, pady=5, sticky="w")
-    scrolledtext.ScrolledText(right_frame, wrap="word", width=50, height=20).grid(row=1, column=0, columnspan=2, padx=10, pady=5, sticky="n")
+    queryText = Entry(right_frame, width=20)
+    queryText.grid(row=0, column=0, padx=10, pady=5, sticky="e")
+    Button(right_frame, text="Search", width=10, highlightthickness=0, bd=0, command=on_search_click).grid(row=0, column=1, padx=10, pady=5, sticky="w")
+    result_text = scrolledtext.ScrolledText(right_frame, wrap="word", width=50, height=20, font=("Helvetica", 12))
+    result_text.grid(row=1, column=0, columnspan=2, padx=10, pady=5, sticky="n")
 
     root.mainloop()
 
 if __name__ == '__main__':
 
-    # ix = loadIndex ()
+    ix = loadIndexCLI ()
     
-    loadGUI()
+    loadGUI(ix)
