@@ -48,7 +48,7 @@ def queryReply (ix, parameters, queryText):
     if sentimentRequest:
         match sentimentRequest [0]:
             case "L":
-                mainQuery = AndNot([Term("sentiment", sentimentRequest[1]), mainQuery])
+                mainQuery = AndNot(mainQuery, Term("sentiment", sentimentRequest[1]))
 
             case "l":
                 mainQuery = AndMaybe(mainQuery, Not(Term("sentiment", sentimentRequest[1])))
@@ -64,17 +64,19 @@ def queryReply (ix, parameters, queryText):
                 quit()
     
     #* TYPE in query
-    if wineType:
-        print(wineType)
-        wineTypeQueries = [Term("wine_type", wt) for wt in wineType]
-        wineTypeQuery = Or(wineTypeQueries)
-        mainQuery = And([mainQuery, wineTypeQuery])
+    # if wineType:
+    #     print(wineType)
+    #     wineTypeQueries = [Term("wine_type", wt) for wt in wineType]
+    #     wineTypeQuery = Or(wineTypeQueries)
+    #     mainQuery = And([mainQuery, wineTypeQuery])
 
-    if wineType:
-        for wt in wineType:
-            
+    # wineTypeQuery2 = Term("wine_type", 2)
+    
+    wineTypeAllowed = Term("wine_type", "1")
 
-    results = searcher.search(mainQuery, limit=100)
+    #mainQuery = And(mainQuery, wineQ)
+
+    results = searcher.search(mainQuery, filter = wineTypeAllowed, limit=100)
     return results
 
 def printingResultsCLI (results):
@@ -98,8 +100,7 @@ if __name__ == '__main__':
 
     priceInterval = None
     wineType = ["1"]
-    sentimentRequest = (["M", "joy"])
-
+    sentimentRequest = (["L", "joy"])
 
     parameters = searchField, priceInterval, wineType, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag 
 
