@@ -2,13 +2,15 @@ import os
 import argparse
 
 import tkinter as tk
-
 from tkinter import ttk
 from tkinter import filedialog
 from tkinter import Tk, Frame, Label, Button, Entry, Checkbutton, IntVar, scrolledtext, PhotoImage
 
 from whoosh.index import open_dir
 from whoosh.qparser import MultifieldParser
+from whoosh.query import And, AndNot, Not, AndMaybe, Term
+
+from correctionsAnalysis import *
 
 def update_selection():
     selected_numbers = [number_mapping[wine_type] for wine_type, var in zip(wine_types, check_vars) if var.get() == 1]
@@ -154,4 +156,6 @@ if __name__ == '__main__':
 
     ix = loadIndexCLI ()
     
+    correctionTool = initCorrectionTool ()
+
     loadGUI(ix)
