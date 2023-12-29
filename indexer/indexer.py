@@ -9,6 +9,8 @@ from whoosh.index import create_in
 from whoosh.qparser import MultifieldParser
 from whoosh.qparser import QueryParser
 from whoosh.analysis import LanguageAnalyzer
+from whoosh.query import NumericRange
+from whoosh.query import And, AndNot, Not, AndMaybe, Term
 
 from sentimentAnalyis import setSentiment, initClassifier
 
@@ -136,12 +138,18 @@ if __name__ == '__main__':
     search_field = ["wine_name", "style_description", "review_note", "wine_winery"]
     query_parser = MultifieldParser(search_field, ix.schema)
 
+    min_price = 8.0
+    max_price = 20.0
+    price_query = NumericRange("wine_price", min_price, max_price, startexcl=True, endexcl=True)
+
     while True:
         print ("Digita la tua query> ")
         query_string = input()
         # query_string = "rosso intenso"
         query = query_parser.parse(query_string)
-        results = searcher.search(query)
+        combined_query = And([query, price_query])
+        results = searcher.search(combined_query)
+
 
         print("Search results:")
         for i, result in enumerate(results):
