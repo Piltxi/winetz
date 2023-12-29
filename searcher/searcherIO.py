@@ -7,12 +7,31 @@ from whoosh.query import NumericRange
 from whoosh import scoring
 from autocorrect import Speller
 
-def loadIndexCLI ():
+import tkinter as tk
+from tkinter import Tk, messagebox
+
+def loadIndex (GUI):
+
+    if GUI:
+        indexPath = "../index"
+        
+        if not os.path.exists(indexPath) and not os.path.isdir(indexPath):
+            
+            root = Tk()
+            root.withdraw()
+            messagebox.showerror('wineTz', 'The index was not loaded. \n\nThe interface will launch, but enter the index manually via the button.')
+            root.after(1, root.destroy)
+            root.mainloop()
+            
+            return None
+        
+        ix = open_dir(indexPath)
+        return ix
 
     indexPath = input("Type the path to the index directory [or press enter]> ")
     indexPath = indexPath if indexPath else "../index"
 
-    if not os.path.exists(indexPath) and os.path.isdir(indexPath):
+    if not os.path.exists(indexPath) and not os.path.isdir(indexPath):
         print ("] error during loading index: directory not found.\n")
         quit()
 
@@ -24,7 +43,7 @@ def loadIndexCLI ():
 
 def queryReply (ix, parameters, queryText): 
 
-    searchField, priceInterval, wineType, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, year = parameters
+    searchField, priceInterval, wineTypes, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, year = parameters
     
     #* parser parameters init
     scoreMethod = scoring.TF_IDF() if algorithm else scoring.BM25F()
@@ -63,33 +82,34 @@ def queryReply (ix, parameters, queryText):
                 print ("\n\n] error detected: sentiment score attribution in query exploration.\n\n")
                 quit()
     
-    #* TYPE in query
-    # if wineType:
-    #     print(wineType)
-    #     wineTypeQueries = [Term("wine_type", wt) for wt in wineType]
-    #     wineTypeQuery = Or(wineTypeQueries)
-    #     mainQuery = And([mainQuery, wineTypeQuery])
-
-    # wineTypeQuery2 = Term("wine_type", 2)
+    combined_filter = None
     
-    # wineTypeQueries = None
-    # wineTypeAllowed1 = Term("wine_type", "1")
+    #* TYPE in query
+    wineFilters = None
+    if wineTypes:
+        filter_conditions = [Term("wine_type", wt) for wt in wineTypes]
+        wineFilters = Or(filter_conditions)
 
-    wine_types = ["1", "3"]
-    filter_conditions = [Term("wine_type", wt) for wt in wine_types]
-    wine_type_filter = Or(filter_conditions)
+        if combined_filter:
+            combined_filter = And ([combined_filter, wineFilters])
+        else:
+            combined_filter = wineFilters
 
+    #* YEAR in query
     yearFilter = None
     if year: 
         yearFilter = Term ("wine_year", year)
-        # yearQuery = And (yearFilter)
-        # mainQuery = And (mainQuery, yearQuery)
 
-    #wine_type_filter = None
+        if combined_filter:
+            combined_filter = And ([combined_filter, yearFilter])
+        else:
+            combined_filter = yearFilter
     
-    results = searcher.search(mainQuery, filter = yearFilter, limit=100)
-    #results = searcher.search(mainQuery, filter = wine_type_filter+yearFilter, limit=100)
-    return results
+    rObject = "\n______request object______\n" + f"TEXT: [{queryText}]\t QUERY: {queryText}\nPARAMETERS: " + str(mainQuery) + "\nFILTERS: " + str(combined_filter) + "\n" + str("_"*30) + "\n"
+    print (rObject)
+
+    results = searcher.search(mainQuery, filter = combined_filter, limit=100)
+    return rObject, results
 
 def printingResultsCLI (results):
 
@@ -99,7 +119,8 @@ def printingResultsCLI (results):
 
 if __name__ == '__main__':
 
-    ix = loadIndexCLI ()
+    ix = loadIndex (GUI=True)
+    
 
     searchField = ["wine_name", "style_description", "review_note", "wine_winery"]
     priceInterval = [(None), (None)]
@@ -111,10 +132,10 @@ if __name__ == '__main__':
     correctionFlag = False
 
     priceInterval = None
-    wineType = ["1"]
-    sentimentRequest = (["L", "joy"])
+    wineType = ["1", "2"]
+    sentimentRequest = (["M", "joy"])
 
-    year = 2024
+    year = 2021
 
     parameters = searchField, priceInterval, wineType, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, year
 
@@ -122,7 +143,7 @@ if __name__ == '__main__':
         queryText = input ("type query> ")
         
         results = queryReply (ix, parameters, queryText)
-        printingResultsCLI (results)
+        printingResultsCLI (results[1])
 
 
     results = queryReply (ix)
