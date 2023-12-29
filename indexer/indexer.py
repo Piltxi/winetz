@@ -82,11 +82,12 @@ if __name__ == '__main__':
         wine_name=TEXT(stored=True, analyzer=itAnalyzer),
         user_rating=NUMERIC(float, stored=True),
         review_note=TEXT(stored=True, analyzer=itAnalyzer),
-        created_at=TEXT(stored=True),
+        created_at=TEXT(stored=False),
         wine_winery=TEXT(stored=True, analyzer=itAnalyzer),
         wine_year=NUMERIC(int, stored=True),
-        wine_rating_count=NUMERIC(int, stored=True),
-        sentiment=TEXT(stored=True)
+        wine_rating_count=NUMERIC(int, stored=False),
+        sentiment=TEXT(stored=True),
+        wine_price = NUMERIC(float, stored=True)
     )
 
     ix = create_in(indexPath, schema)
@@ -114,7 +115,8 @@ if __name__ == '__main__':
                                     "wine_winery": wine["wine_Winery"],
                                     "wine_year": wine["wine_Year"],
                                     "wine_rating_count": wine["wine_Rates_count"],
-                                    "sentiment": sentiment
+                                    "sentiment": sentiment,
+                                    "wine_price": wine["wine_Price"]
                                 }
                                 
                                 writer.add_document(**doc)
@@ -143,6 +145,6 @@ if __name__ == '__main__':
 
         print("Search results:")
         for i, result in enumerate(results):
-            print(i, "] ",result["wine_name"], "\n\n",result["review_note"], "\n\n", f"sentiment: {result['sentiment']}")
+            print(i, "] ",result["wine_name"], "\n\n",result["review_note"], "\n\n", f"sentiment: {result['sentiment']}", "Price: ", result["wine_price"])
 
     searcher.close()
