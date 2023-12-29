@@ -24,7 +24,7 @@ def loadIndexCLI ():
 
 def queryReply (ix, parameters, queryText): 
 
-    searchField, priceInterval, wineType, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag = parameters
+    searchField, priceInterval, wineType, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, year = parameters
     
     #* parser parameters init
     scoreMethod = scoring.TF_IDF() if algorithm else scoring.BM25F()
@@ -72,11 +72,23 @@ def queryReply (ix, parameters, queryText):
 
     # wineTypeQuery2 = Term("wine_type", 2)
     
-    wineTypeAllowed = Term("wine_type", "1")
+    # wineTypeQueries = None
+    # wineTypeAllowed1 = Term("wine_type", "1")
 
-    #mainQuery = And(mainQuery, wineQ)
+    wine_types = ["1", "3"]
+    filter_conditions = [Term("wine_type", wt) for wt in wine_types]
+    wine_type_filter = Or(filter_conditions)
 
-    results = searcher.search(mainQuery, filter = wineTypeAllowed, limit=100)
+    yearFilter = None
+    if year: 
+        yearFilter = Term ("wine_year", year)
+        # yearQuery = And (yearFilter)
+        # mainQuery = And (mainQuery, yearQuery)
+
+    #wine_type_filter = None
+    
+    results = searcher.search(mainQuery, filter = yearFilter, limit=100)
+    #results = searcher.search(mainQuery, filter = wine_type_filter+yearFilter, limit=100)
     return results
 
 def printingResultsCLI (results):
@@ -90,7 +102,7 @@ if __name__ == '__main__':
     ix = loadIndexCLI ()
 
     searchField = ["wine_name", "style_description", "review_note", "wine_winery"]
-    priceInterval = [(8.55), (10.00)]
+    priceInterval = [(None), (None)]
     # wineType = ["1"]
     sentimentRequest = (["M", "joy"])
     algorithm = False
@@ -102,7 +114,9 @@ if __name__ == '__main__':
     wineType = ["1"]
     sentimentRequest = (["L", "joy"])
 
-    parameters = searchField, priceInterval, wineType, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag 
+    year = 2024
+
+    parameters = searchField, priceInterval, wineType, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, year
 
     while True: 
         queryText = input ("type query> ")
