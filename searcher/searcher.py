@@ -6,30 +6,19 @@ from tkinter import ttk
 from tkinter import filedialog
 from tkinter import Tk, Frame, Label, Button, Entry, Checkbutton, IntVar, scrolledtext, PhotoImage
 
+from tkinter import IntVar
+
 from whoosh.index import open_dir
 from whoosh.qparser import MultifieldParser
 from whoosh.query import And, AndNot, Not, AndMaybe, Term
 
 from correctionsAnalysis import *
+from searcherIO import loadIndex, queryReply
+
 
 def update_selection():
     selected_numbers = [number_mapping[wine_type] for wine_type, var in zip(wine_types, check_vars) if var.get() == 1]
     print("Selected numbers:", selected_numbers)
-
-def loadIndexCLI ():
-
-    indexPath = input("Type the path to the index directory [or press enter]> ")
-    indexPath = indexPath if indexPath else "../index"
-
-    if not os.path.exists(indexPath) and os.path.isdir(indexPath):
-        print ("] error during loading index: directory not found.\n")
-        quit()
-
-    ix = open_dir(indexPath)
-    
-    print (f"Number of items in loaded index: {ix.doc_count_all()}")
-    
-    return ix
 
 def loadIndexGUI ():
 
@@ -51,10 +40,38 @@ def search_and_display_results(ix, query_string, search_field=["wine_name", "sty
     return results
 
 def loadGUI (ix): 
+
+    def disable_event(event):
+        return "break"
+
+    def searcherButton (): 
+        query_string = queryText.get()
+
+        searchField = ["wine_name", "style_description", "review_note", "wine_winery"]
+        priceInterval = None
+        sentimentRequest = (["M", "joy"])
+        algorithm = False
+        andFlag = False
+        thesaurusFlag = False
+        correctionFlag = False
+        wineType = ["1", "2"]
+        
+        yearV = yearEntry.get() if yearEntry.get() else None
+
+        print ("YYYY : ", yearV)
+
+        parameters = searchField, priceInterval, wineType, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, yearV
+        qustion, results = queryReply (ix, parameters, query_string)
+
+        result_text.delete(1.0, tk.END)
+        for i, result in enumerate(results):
+            result_text.insert(tk.END, f"{i + 1}] {result['wine_name']}\n\n{result['review_note']}\n\nSentiment: {result['sentiment']}\n\n")
+
+
     def on_search_click():
         query_string = queryText.get()
         results = search_and_display_results(ix, query_string)
-        result_text.delete(1.0, tk.END)  # Clear previous results
+        result_text.delete(1.0, tk.END)
         for i, result in enumerate(results):
             result_text.insert(tk.END, f"{i + 1}] {result['wine_name']}\n\n{result['review_note']}\n\nSentiment: {result['sentiment']}\n\n")
 
@@ -107,9 +124,10 @@ def loadGUI (ix):
     Label(priceBar, text="Price", relief="raised").grid(row=0, column=0, padx=5, pady=5, sticky="w")
     Entry(priceBar, width=4).grid(row=0, column=1, padx=5, pady=2, sticky="w")
     Entry(priceBar, width=4).grid(row=0, column=2, padx=5, pady=2, sticky="w")
+    
+    yearEntry = IntVar()
     Label(priceBar, text="Year", relief="raised").grid(row=0, column=3, padx=5, pady=5, sticky="w")
-    Entry(priceBar, width=4).grid(row=0, column=4, padx=5, pady=2, sticky="w")
-
+    Entry(priceBar, width=4, textvariable=yearEntry).grid(row=0, column=4, padx=5, pady=2, sticky="w")
 
     #* BAR: Sentiment
     sentimentBar = Frame(left_frame, width=180, height=185, bg="#fdf7d5")
@@ -149,15 +167,16 @@ def loadGUI (ix):
     #* Right Frame -> query and results
     queryText = Entry(right_frame, width=20)
     queryText.grid(row=0, column=0, padx=10, pady=5, sticky="e")
-    Button(right_frame, text="Search", width=10, highlightthickness=0, bd=0, command=on_search_click).grid(row=0, column=1, padx=10, pady=5, sticky="w")
+    Button(right_frame, text="Search", width=10, highlightthickness=0, bd=0, command=searcherButton).grid(row=0, column=1, padx=10, pady=5, sticky="w")
     result_text = scrolledtext.ScrolledText(right_frame, wrap="word", width=50, height=20, font=("Helvetica", 12))
     result_text.grid(row=1, column=0, columnspan=2, padx=10, pady=5, sticky="n")
+    result_text.bind("<Key>", disable_event)
 
     root.mainloop()
 
 if __name__ == '__main__':
 
-    ix = loadIndexCLI ()
+    ix = loadIndex (GUI=True)
     
     correctionTool = initCorrectionTool ()
 
