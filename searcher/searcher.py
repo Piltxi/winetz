@@ -6,6 +6,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from tkinter import Tk, Frame, Label, Button, Entry, Checkbutton, scrolledtext, PhotoImage
 from tkinter import StringVar, IntVar, DoubleVar, BooleanVar
+from tkinter import messagebox
 
 from whoosh.index import open_dir
 from whoosh.qparser import MultifieldParser
@@ -14,22 +15,39 @@ from whoosh.query import And, AndNot, Not, AndMaybe, Term
 from correctionsAnalysis import *
 from searcherIO import loadIndex, queryReply
 
-def update_selection():
-    selected_numbers = [number_mapping[wine_type] for wine_type, var in zip(wine_types, wineTypes) if var.get() == 1]
-    print("Selected numbers:", selected_numbers)
-
-def loadIndexGUI ():
-
-    inputPath = filedialog.askdirectory()
-    ix = open_dir(inputPath)
-
-    return ix
-
-def exportReport (): 
-
-    outputPath = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
 
 def loadGUI (ix): 
+
+    global lastResearch
+
+    def exportReport (): 
+        outputPath = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
+
+        with open (outputPath, 'w') as fo:
+            fo.write (lastResearch[0])
+
+            for result in enumerate(lastResearch[1]):
+                fo.write (i, "] ",result["wine_name"], "tipo:", result["wine_type"], "\n", f"sentiment: {result['sentiment']}", "Price: ", result["wine_price"], "\n\n")
+        
+        print ("exported.")
+
+
+    def loadIndexFromDialog():
+        inputPath = filedialog.askdirectory()
+        
+        try:
+            ix = open_dir(inputPath)
+        except Exception as e:
+            print ("Error in loading index from: ", inputPath)
+            messagebox.showerror('wineTz', 'The index was not loaded.')
+
+        print ("Loaded new index from: ", inputPath)
+        print ("rebooting...")
+        root.destroy()
+        loadGUI(ix)
+
+    def cleanParam (): 
+        pass
 
     def disable_event(event):
         return "break"
@@ -37,7 +55,7 @@ def loadGUI (ix):
     def searcherButton (): 
         query_string = queryText.get()
 
-        searchField = ["wine_name", "style_description", "review_note", "wine_winery"]
+        default = ["wine_name", "style_description", "review_note", "wine_winery"]
         priceInterval = None
         sentimentRequest = (["M", "joy"])
 
@@ -62,6 +80,13 @@ def loadGUI (ix):
         else:
             priceInterval = [minPV, MaxPV]
 
+        selectedFields = combo.get()
+
+        if selectedFields == "in: [All fields]":
+            searchField = default
+        else: 
+            searchField = [mappingFields[selectedFields]]
+
         print ("Wine Type: ", wineTypes)
         print ("Wine Type: ", selected_numbers)
         print ("YYYY : ", yearV)
@@ -70,6 +95,9 @@ def loadGUI (ix):
 
         parameters = searchField, priceInterval, selected_numbers, sentimentRequest, algorithm, thesaurusFlag, andFlag.get(), autoCorrectionFlag, yearV
         question, results = queryReply (ix, parameters, query_string)
+
+        global lastResearch 
+        lastResearch = [question, results]
 
         result_text.delete(1.0, tk.END)
         for i, result in enumerate(results):
@@ -80,8 +108,8 @@ def loadGUI (ix):
     
     root.title("wineTz")
     root.configure(bg="white")
-    root.minsize(850, 500)
-    root.maxsize(850, 500)
+    root.minsize(850, 450)
+    root.maxsize(850, 450)
 
     top_frame = Frame(root, relief="solid", borderwidth=0, bg="white")
     top_frame.pack(side="top", fill="both", expand=True)
@@ -139,13 +167,21 @@ def loadGUI (ix):
     entry_below_sentiment = tk.Entry(sentimentBar, width=15)
     entry_below_sentiment.grid(row=0, column=1, padx=10, pady=5, sticky="w")
 
-    #* BAR: Field search for multifield
-    selected_value = tk.StringVar()
+    #* BAR: Field search for multifield and AND button
     fieldBar = Frame(left_frame, width=180, height=185, bg="#cb8e92")
     fieldBar.grid(row=5, column=0, padx=5, pady=5, sticky="n")
     Label(fieldBar, text="Field", relief="raised").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-    combo_options = ["in: [All fields]", "in: [Wine Name]", "in: [Vinery]", "in: [Review]"]
-    combo = ttk.Combobox(fieldBar, values=combo_options, textvariable=selected_value)
+    
+    combo_options = ["in: [All fields]", "in: [Wine Name]", "in: [Vinery]", "in: [Review]", "in: [Description]"]
+    default = ["wine_name", "style_description", "review_note", "wine_winery"]
+    mappingFields = {
+        "in: [All fields]" : default,
+        "in: [Wine Name]" : "wine_name", 
+        "in: [Vinery]" : "wine_winery",
+        "in: [Review]" : "review_note",
+        "in: [Description]" : "style_description"
+    }
+    combo = ttk.Combobox(fieldBar, values=combo_options)
     combo.grid(row=0, column=1, padx=10, pady=10)
     combo.set("in: [All fields]")
 
@@ -173,7 +209,7 @@ def loadGUI (ix):
     Checkbutton(environmentBar, text="TF-IDF", variable=tfidfFlag).grid(row=0, column=3, padx=10, pady=5, sticky="w")
     Checkbutton(environmentBar, text="BM25F", variable=bm25Flag).grid(row=0, column=4, padx=10, pady=5, sticky="w")
     
-    Button(environmentBar, text="index", width=5, highlightthickness=0, bd=0, command=loadIndexGUI).grid(row=0, column=5, padx=10, pady=5, sticky="w")
+    Button(environmentBar, text="index", width=5, highlightthickness=0, bd=0, command=loadIndexFromDialog).grid(row=0, column=5, padx=10, pady=5, sticky="w")
 
     #* Right Frame -> query and results
     queryText = Entry(right_frame, width=20)
