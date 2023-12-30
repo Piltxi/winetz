@@ -58,8 +58,8 @@ def queryReply (ix, parameters, queryText):
     #! Todo: thesaurus and correction
 
     #* PRICE in query
-    if priceInterval:
-        minPrice, maxPrice = map(float, priceInterval)
+    if priceInterval != None:
+        minPrice, maxPrice = priceInterval
         priceQuery = NumericRange("wine_price", minPrice, maxPrice, startexcl=True, endexcl=True)
         mainQuery = And([mainQuery, priceQuery])
 
@@ -105,10 +105,19 @@ def queryReply (ix, parameters, queryText):
         else:
             combined_filter = yearFilter
     
-    rObject = "\n______request object______\n" + f"TEXT: [{queryText}]\t QUERY: {queryText}\nPARAMETERS: " + str(mainQuery) + "\nFILTERS: " + str(combined_filter) + "\n" + str("_"*30) + "\n"
+    algoString = "ALGORITHM: BM25F\t"
+    if algorithm:
+        algoString = "ALGORITHM: TD-IDF\t"
+
+    searchMode = "MODE: OR-Query\t"
+    if andFlag:
+        searchMode = "MODE: AND-Query\t"
+
+    rObject = "\n______request object______\n" + f"inTEXT: [{queryText}]\t inQUERY: {queryText}\nQUERY: " + str(mainQuery) + "\nFILTERS: " + str(combined_filter) +"\n" + "FIELD(s): "+ str(searchField) + "\n" + algoString + searchMode + "inSENTIMENT: " + str(sentimentRequest) + "\n" + str("_"*30) + "\n"
+    
     print (rObject)
 
-    results = searcher.search(mainQuery, filter = combined_filter, limit=100)
+    results = searcher.search(mainQuery, filter = combined_filter, limit=1000)
     return rObject, results
 
 def printingResultsCLI (results):
@@ -121,7 +130,6 @@ if __name__ == '__main__':
 
     ix = loadIndex (GUI=True)
     
-
     searchField = ["wine_name", "style_description", "review_note", "wine_winery"]
     priceInterval = [(None), (None)]
     # wineType = ["1"]
@@ -133,9 +141,12 @@ if __name__ == '__main__':
 
     priceInterval = None
     wineType = ["1", "2"]
-    sentimentRequest = (["M", "joy"])
+    #sentimentRequest = (["M", "joy"])
 
-    year = 2021
+    sentimentRequest = None
+
+
+    year = None
 
     parameters = searchField, priceInterval, wineType, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, year
 
