@@ -2,7 +2,7 @@ import os
 import argparse
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import Scale, Toplevel, ttk
 from tkinter import filedialog
 from tkinter import Tk, Frame, Label, Button, Entry, Checkbutton, scrolledtext, PhotoImage
 from tkinter import StringVar, IntVar, DoubleVar, BooleanVar
@@ -17,10 +17,88 @@ from searcherIO import loadIndex, queryReply
 
 from searcherIO import printingResultsCLI
 
+sentimentRequest = {'emotion': None, 'level': None}
+
+def translateSentiment (sentimentRequest): 
+    
+    corrispondence = {
+        "Fear": "fear",
+        "Angry": "angry",
+        "Sadness": "sadness",
+        "Joy": "joy",
+        "Low": "L",
+        "Middle-Low": "l",
+        "Middle-High": "m",
+        "High": "M"
+    }
+
+    emotion = sentimentRequest.get('emotion')
+    level = sentimentRequest.get('level')
+
+    if emotion is None: 
+        return None
+
+    if level is None: 
+        translated_emotion = corrispondence.get(emotion)
+        return ["M", translated_emotion]
+    
+    translated_emotion = corrispondence.get(emotion)
+    translated_level = corrispondence.get(level)
+
+    if translated_emotion is None or translated_level is None:
+        print ("] Error in sentiment translator")
+        quit()
+    
+    return [translated_level, translated_emotion]
 
 def loadGUI (ix): 
 
     global lastResearch
+
+    def setSentimentConfig(): 
+
+        def update_emotion(value):
+            current_emotion = emotions[int(value)]
+            emotion_label.config(text=f"Emotion: {current_emotion}")
+            sentimentRequest['emotion'] = current_emotion
+            print ("up emotion: ", sentimentRequest['emotion'])
+
+        def update_level(value):
+            current_level = levels[int(value)]
+            level_label.config(text=f"Level: {current_level}")
+            sentimentRequest['level'] = current_level
+            print ("up level: ", sentimentRequest['level'])
+
+        sentimentWindow = Toplevel(root)
+        sentimentWindow.title("Sentiment Configuration")
+        
+        #sentimentWindow.configure(bg="white")
+
+        # Etichetta per indicare l'emozione corrente
+        emotion_label = tk.Label(sentimentWindow, text="Emotion: ")
+        emotion_label.grid(row=0, column=0, columnspan=4)
+
+        # Slider con 4 posizioni fisse
+        slider = tk.Scale(sentimentWindow, from_=0, to=3, orient=tk.HORIZONTAL, command=update_emotion, showvalue=0, length=300)
+        slider.grid(row=1, column=0, columnspan=4)
+
+        # Etichette separate per ogni emozione
+        emotions = ["Fear", "Angry", "Sadness", "Joy"]
+        for i, emotion in enumerate(emotions):
+            tk.Label(sentimentWindow, text=emotion).grid(row=2, column=i)
+
+        # Etichetta per indicare l'emozione corrente
+        level_label = tk.Label(sentimentWindow, text="Emotion: ")
+        level_label.grid(row=3, column=0, columnspan=4)
+
+        # Slider con 4 posizioni fisse
+        sliderLevel = tk.Scale(sentimentWindow, from_=0, to=3, orient=tk.HORIZONTAL, command=update_level, showvalue=0, length=300)
+        sliderLevel.grid(row=4, column=0, columnspan=4)
+
+        # Etichette separate per ogni emozione
+        levels = ["Low", "Middle-Low", "Middle-High", "High"]
+        for i, level in enumerate(levels):
+            tk.Label(sentimentWindow, text=level).grid(row=5, column=i)
 
     def exportReport (): 
         outputPath = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
@@ -33,6 +111,8 @@ def loadGUI (ix):
 
             for i, result in enumerate(results):
                 print(i, "] ",result["wine_name"], "\n\n",result["review_note"], "\n\n", f"sentiment: {result['sentiment']}", "Price: ", result["wine_price"])
+
+                responseForResult = f"\n {'_'*50}\n  Result {i+1}\nWine: {result['wine_name']}\tWinery: {result['winery']}"
 
                 strResponse = f"{i} ] {result['wine_name']}\n\n{result['review_note']}\n\nsentiment: {result['sentiment']} Price: {result['wine_price']}"
                 print ("RISPOTA: ", strResponse)
@@ -47,23 +127,24 @@ def loadGUI (ix):
         
         print ("exported.")
 
-
     def loadIndexFromDialog():
         inputPath = filedialog.askdirectory()
         
         try:
             ix = open_dir(inputPath)
         except Exception as e:
-            print ("Error in loading index from: ", inputPath)
+            print ("] Error in loading index from: ", inputPath)
             messagebox.showerror('wineTz', 'The index was not loaded.')
+            quit()
 
         print ("Loaded new index from: ", inputPath)
         print ("rebooting...")
         root.destroy()
         loadGUI(ix)
 
+    #! to finish
     def cleanParam (): 
-        pass
+        yearEntry.set("")
 
     def disable_event(event):
         return "break"
@@ -73,7 +154,10 @@ def loadGUI (ix):
 
         default = ["wine_name", "style_description", "review_note", "wine_winery"]
         priceInterval = None
-        sentimentRequest = (["M", "joy"])
+
+        # sentimentInQuery = (["M", "joy"])
+        # #sentimentInQuery = None
+        sentimentInQuery = translateSentiment (sentimentRequest)
 
         algorithm = False
         if not bm25Flag.get():
@@ -108,8 +192,9 @@ def loadGUI (ix):
         print ("YYYY : ", yearV)
         print ("YYYY : ", minPV)
         print ("YYYY : ", MaxPV)
+        # print ("Emotion: ", slider_horizontal_var)
 
-        parameters = searchField, priceInterval, selected_numbers, sentimentRequest, algorithm, thesaurusFlag, andFlag.get(), autoCorrectionFlag, yearV
+        parameters = searchField, priceInterval, selected_numbers, sentimentInQuery, algorithm, thesaurusFlag, andFlag.get(), autoCorrectionFlag, yearV
         question, results = queryReply (ix, parameters, query_string)
 
         global lastResearch 
@@ -119,6 +204,8 @@ def loadGUI (ix):
         for i, result in enumerate(results):
             result_text.insert(tk.END, f"{i + 1}] {result['wine_name']}\n\n{result['review_note']}\n\nSentiment: {result['sentiment']}\n\n")
 
+    # slider_horizontal_var = tk.DoubleVar()
+    
     #* main window config
     root = tk.Tk()
     
@@ -179,7 +266,7 @@ def loadGUI (ix):
     #* BAR: Sentiment
     sentimentBar = Frame(left_frame, width=180, height=185, bg="#fdf7d5")
     sentimentBar.grid(row=4, column=0, padx=5, pady=5, sticky="n")
-    Button(sentimentBar, text="sentiment", width=5, highlightthickness=0, bd=0).grid(row=0, column=0, padx=10, pady=5, sticky="w")
+    Button(sentimentBar, text="sentiment", width=5, highlightthickness=0, bd=0, command=setSentimentConfig).grid(row=0, column=0, padx=10, pady=5, sticky="w")
     entry_below_sentiment = tk.Entry(sentimentBar, width=15)
     entry_below_sentiment.grid(row=0, column=1, padx=10, pady=5, sticky="w")
 
@@ -211,7 +298,7 @@ def loadGUI (ix):
     downBar = Frame(left_frame, width=180, height=185, bg="#d5833f", highlightthickness=0, bd=0)
     downBar.grid(row=6, column=0, padx=5, pady=5, sticky="n")
     Button(downBar, text="export", width=5, highlightthickness=0, bd=0, command=exportReport).grid(row=0, column=1, padx=10, pady=5, sticky="w")
-    Button(downBar, text="refresh", width=5, highlightthickness=0, bd=0).grid(row=0, column=2, padx=10, pady=5, sticky="w")
+    Button(downBar, text="refresh", width=5, highlightthickness=0, bd=0, command=cleanParam).grid(row=0, column=2, padx=10, pady=5, sticky="w")
     
     autoCorrectionFlag = BooleanVar(value=True)
     thesaurusFlag = BooleanVar(value=False)
