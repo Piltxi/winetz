@@ -40,8 +40,6 @@ def loadGUI (ix):
         searchField = ["wine_name", "style_description", "review_note", "wine_winery"]
         priceInterval = None
         sentimentRequest = (["M", "joy"])
-        
-        andFlag = False
 
         algorithm = False
         if not bm25Flag.get():
@@ -70,7 +68,7 @@ def loadGUI (ix):
         print ("YYYY : ", minPV)
         print ("YYYY : ", MaxPV)
 
-        parameters = searchField, priceInterval, selected_numbers, sentimentRequest, algorithm, thesaurusFlag, andFlag, autoCorrectionFlag, yearV
+        parameters = searchField, priceInterval, selected_numbers, sentimentRequest, algorithm, thesaurusFlag, andFlag.get(), autoCorrectionFlag, yearV
         question, results = queryReply (ix, parameters, query_string)
 
         result_text.delete(1.0, tk.END)
@@ -146,11 +144,13 @@ def loadGUI (ix):
     fieldBar = Frame(left_frame, width=180, height=185, bg="#cb8e92")
     fieldBar.grid(row=5, column=0, padx=5, pady=5, sticky="n")
     Label(fieldBar, text="Field", relief="raised").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-    combo_options = ["Default", "Opzione 2", "Opzione 3", "Opzione 4"]
+    combo_options = ["in: [All fields]", "in: [Wine Name]", "in: [Vinery]", "in: [Review]"]
     combo = ttk.Combobox(fieldBar, values=combo_options, textvariable=selected_value)
     combo.grid(row=0, column=1, padx=10, pady=10)
+    combo.set("in: [All fields]")
 
-    combo.set("Opzione predefinita")
+    andFlag = BooleanVar(value=False)
+    Checkbutton(fieldBar, text="AND", variable=andFlag).grid(row=0, column=2, padx=10, pady=5, sticky="w")
 
     #* BAR: Environment
     var = True
