@@ -79,16 +79,16 @@ if __name__ == '__main__':
     classifierIT, classifierEN = initClassifier (args.offline)
 
     schema = Schema(
-        wine_type=TEXT(stored=True),
-        style_description=TEXT(stored=True),
-        wine_name=TEXT(stored=True, analyzer=itAnalyzer),
-        user_rating=NUMERIC(float, stored=True),
-        review_note=TEXT(stored=True, analyzer=itAnalyzer),
-        created_at=TEXT(stored=False),
-        wine_winery=TEXT(stored=True, analyzer=itAnalyzer),
-        wine_year=NUMERIC(int, stored=True),
-        wine_rating_count=NUMERIC(int, stored=False),
-        sentiment=TEXT(stored=True),
+        wine_type = NUMERIC(int, stored=True),
+        style_description = TEXT(stored=True),
+        wine_name = TEXT(stored=True, analyzer=itAnalyzer),
+        user_rating = NUMERIC(float, stored=True),
+        review_note = TEXT(stored=True, analyzer=itAnalyzer),
+        created_at = TEXT(stored=False),
+        wine_winery = TEXT(stored=True, analyzer=itAnalyzer),
+        wine_year = NUMERIC(int, stored=True),
+        wine_rating_count = NUMERIC(int, stored=False),
+        sentiment = TEXT(stored=True),
         wine_price = NUMERIC(float, stored=True)
     )
 
@@ -126,33 +126,3 @@ if __name__ == '__main__':
 
     print("Committing final changes...")
     writer.commit()
-
-    '''
-        The following lines represent an example of how to formulate a query to the search engine. 
-        In this way, the query is formulated on multiple fields (MultifieldParser).
-        This represents example and debug code only.
-    '''
-
-    searcher = ix.searcher()
-
-    search_field = ["wine_name", "style_description", "review_note", "wine_winery"]
-    query_parser = MultifieldParser(search_field, ix.schema)
-
-    min_price = 8.0
-    max_price = 20.0
-    price_query = NumericRange("wine_price", min_price, max_price, startexcl=True, endexcl=True)
-
-    while True:
-        print ("Digita la tua query> ")
-        query_string = input()
-        # query_string = "rosso intenso"
-        query = query_parser.parse(query_string)
-        combined_query = And([query, price_query])
-        results = searcher.search(combined_query)
-
-
-        print("Search results:")
-        for i, result in enumerate(results):
-            print(i, "] ",result["wine_name"], "\n\n",result["review_note"], "\n\n", f"sentiment: {result['sentiment']}", "Price: ", result["wine_price"])
-
-    searcher.close()
