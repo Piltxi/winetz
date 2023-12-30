@@ -15,6 +15,8 @@ from whoosh.query import And, AndNot, Not, AndMaybe, Term
 from correctionsAnalysis import *
 from searcherIO import loadIndex, queryReply
 
+from searcherIO import printingResultsCLI
+
 
 def loadGUI (ix): 
 
@@ -24,10 +26,24 @@ def loadGUI (ix):
         outputPath = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
 
         with open (outputPath, 'w') as fo:
-            fo.write (lastResearch[0])
+            
+            rObject, results = lastResearch
 
-            for result in enumerate(lastResearch[1]):
-                fo.write (i, "] ",result["wine_name"], "tipo:", result["wine_type"], "\n", f"sentiment: {result['sentiment']}", "Price: ", result["wine_price"], "\n\n")
+            fo.write (rObject)
+
+            for i, result in enumerate(results):
+                print(i, "] ",result["wine_name"], "\n\n",result["review_note"], "\n\n", f"sentiment: {result['sentiment']}", "Price: ", result["wine_price"])
+
+                strResponse = f"{i} ] {result['wine_name']}\n\n{result['review_note']}\n\nsentiment: {result['sentiment']} Price: {result['wine_price']}"
+                print ("RISPOTA: ", strResponse)
+
+                fo.write(strResponse)
+
+            # for i, result in enumerate (results): 
+            #     fo.write (i, "] ",result["wine_name"], "\n\n",result["review_note"], "\n\n", f"sentiment: {result['sentiment']}", "Price: ", result["wine_price"])
+
+            # for result in enumerate(results):
+            #     fo.write (i, "] ",result["wine_name"], "tipo:", result["wine_type"], "\n", f"sentiment: {result['sentiment']}", "Price: ", result["wine_price"], "\n\n")
         
         print ("exported.")
 
