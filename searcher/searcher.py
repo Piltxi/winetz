@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 from tkinter import Tk, Frame, Label, Button, Entry, Checkbutton, scrolledtext, PhotoImage
-from tkinter import StringVar, IntVar, DoubleVar
+from tkinter import StringVar, IntVar, DoubleVar, BooleanVar
 
 from whoosh.index import open_dir
 from whoosh.qparser import MultifieldParser
@@ -15,7 +15,7 @@ from correctionsAnalysis import *
 from searcherIO import loadIndex, queryReply
 
 def update_selection():
-    selected_numbers = [number_mapping[wine_type] for wine_type, var in zip(wine_types, check_vars) if var.get() == 1]
+    selected_numbers = [number_mapping[wine_type] for wine_type, var in zip(wine_types, wineTypes) if var.get() == 1]
     print("Selected numbers:", selected_numbers)
 
 def loadIndexGUI ():
@@ -40,12 +40,15 @@ def loadGUI (ix):
         searchField = ["wine_name", "style_description", "review_note", "wine_winery"]
         priceInterval = None
         sentimentRequest = (["M", "joy"])
-        algorithm = False
+        
         andFlag = False
-        thesaurusFlag = False
-        correctionFlag = False
-        wineType = ["1", "2"]
-    
+
+        algorithm = False
+        if not bm25Flag.get():
+            if tfidfFlag.get():
+                algorithm = True
+
+        selected_numbers = [number_mapping[wine_type] for wine_type, var in zip(wine_types, wineTypes) if var.get() == 1]
 
         yearV = yearEntry.get()
         yearV = int(yearV) if yearV.strip() else None
@@ -55,20 +58,19 @@ def loadGUI (ix):
 
         MaxPV = maxPriceEntry.get()
         MaxPV = float(MaxPV) if MaxPV.strip() else None
-
-        # minPV = minPriceEntry.get() if minPriceEntry.get() else None
-        # MaxPV = maxPriceEntry.get() if maxPriceEntry.get() else None
         
         if minPV == None and MaxPV == None:
             priceInterval = None 
         else:
             priceInterval = [minPV, MaxPV]
 
-        # print ("YYYY : ", yearV)
-        # print ("YYYY : ", minPV)
-        # print ("YYYY : ", MaxPV)
+        print ("Wine Type: ", wineTypes)
+        print ("Wine Type: ", selected_numbers)
+        print ("YYYY : ", yearV)
+        print ("YYYY : ", minPV)
+        print ("YYYY : ", MaxPV)
 
-        parameters = searchField, priceInterval, wineType, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, yearV
+        parameters = searchField, priceInterval, selected_numbers, sentimentRequest, algorithm, thesaurusFlag, andFlag, autoCorrectionFlag, yearV
         question, results = queryReply (ix, parameters, query_string)
 
         result_text.delete(1.0, tk.END)
@@ -108,7 +110,7 @@ def loadGUI (ix):
         "Dessert Wine": 7,
         "Fortified Wine": 24
     }
-    check_vars = [IntVar() for _ in range(len(wine_types))]
+    wineTypes = [IntVar() for _ in range(len(wine_types))]
 
     typeBar = Frame(left_frame, width=180, height=185, bg="#7b191a")
     typeBar.grid(row=1, column=0, padx=5, pady=5, sticky="n")
@@ -116,7 +118,7 @@ def loadGUI (ix):
     for i, wine_type in enumerate(wine_types):
         row_num = i // 2 + 2
         col_num = i % 2
-        Checkbutton(typeBar, text=wine_type, variable=check_vars[i]).grid(row=row_num, column=col_num, padx=5, pady=3, sticky="w")
+        Checkbutton(typeBar, text=wine_type, variable=wineTypes[i]).grid(row=row_num, column=col_num, padx=5, pady=3, sticky="w")
 
     #* BAR: Price and Year
     priceBar = Frame(left_frame, width=180, height=185, bg="#e3cf87")
@@ -159,12 +161,17 @@ def loadGUI (ix):
     Button(downBar, text="export", width=5, highlightthickness=0, bd=0, command=exportReport).grid(row=0, column=1, padx=10, pady=5, sticky="w")
     Button(downBar, text="refresh", width=5, highlightthickness=0, bd=0).grid(row=0, column=2, padx=10, pady=5, sticky="w")
     
+    autoCorrectionFlag = BooleanVar(value=True)
+    thesaurusFlag = BooleanVar(value=False)
+    tfidfFlag = BooleanVar(value=False)
+    bm25Flag = BooleanVar(value=True)
+
     environmentBar = Frame(left_frame, width=180, height=185, bg="#420705",highlightthickness=0, bd=0)
     environmentBar.grid(row=7, column=0, padx=5, pady=5, sticky="n")
-    Checkbutton(environmentBar, text="Ac", variable=var).grid(row=0, column=1, padx=10, pady=5, sticky="w")
-    Checkbutton(environmentBar, text="Th", variable=var).grid(row=0, column=2, padx=10, pady=5, sticky="w")
-    Checkbutton(environmentBar, text="TF-IDF", variable=var).grid(row=0, column=3, padx=10, pady=5, sticky="w")
-    Checkbutton(environmentBar, text="BM25F", variable=var).grid(row=0, column=4, padx=10, pady=5, sticky="w")
+    Checkbutton(environmentBar, text="Ac", variable=autoCorrectionFlag).grid(row=0, column=1, padx=10, pady=5, sticky="w")
+    Checkbutton(environmentBar, text="Th", variable=thesaurusFlag).grid(row=0, column=2, padx=10, pady=5, sticky="w")
+    Checkbutton(environmentBar, text="TF-IDF", variable=tfidfFlag).grid(row=0, column=3, padx=10, pady=5, sticky="w")
+    Checkbutton(environmentBar, text="BM25F", variable=bm25Flag).grid(row=0, column=4, padx=10, pady=5, sticky="w")
     
     Button(environmentBar, text="index", width=5, highlightthickness=0, bd=0, command=loadIndexGUI).grid(row=0, column=5, padx=10, pady=5, sticky="w")
 
