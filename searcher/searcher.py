@@ -55,50 +55,6 @@ def loadGUI (ix):
 
     global lastResearch
 
-    def get_wine_type(number):
-
-        number_mapping = {
-        "Red Wine": 1,
-        "White Wine": 2,
-        "Rosé": 3,
-        "Sparkling Wine": 4,
-        "Dessert Wine": 7,
-        "Fortified Wine": 24
-        }
-
-        print ("Wine Type Number loading: ", number)
-        reverse_mapping = {v: k for k, v in number_mapping.items()}
-        return reverse_mapping.get(int(number), "Tipo di vino non trovato")
-
-    def format_result(result):
-        i = result.rank + 1  # Utilizza la proprietà 'rank' di Whoosh per ottenere il numero del risultato
-
-        wine_type = get_wine_type(result['wine_type'])
-        wine_name = result['wine_name']
-        wine_year = result['wine_year']
-        wine_price = result['wine_price']
-        review_note = result['review_note']
-        sentiment = result['sentiment']
-        score = result.score
-
-        # Colore rosso per il nome del vino
-        # wine_name_colored = f"<font color='red'>{wine_name}</font>"
-
-        # Costruisci la stringa formattata con il nome del vino colorato
-        formatted_result = (
-            "\n"
-            f"{i}] Score: {score:.2f}\n"
-            f"{wine_type}: \t"
-            f"{wine_name}\t"
-            f"|{wine_year}|\t"
-            f"Price: {wine_price}\n"
-            f"Note: {review_note}\n"
-            f"Sentiment: {sentiment}\n"
-            f"{'_'*40}\n"
-        )
-
-        return formatted_result
-
     def updateSentimentInfo (sentimentRequest): 
         # entry_below_sentiment.delete(0, tk.END)
         # entry_below_sentiment.insert(0, f"{sentimentRequest['level']} -> {sentimentRequest['emotion']}")
@@ -163,30 +119,19 @@ def loadGUI (ix):
         
         entry_below_sentiment.config(text=f"{str(sentimentRequest)}")
 
+        sentimentWindow.resizable(False, False)
+
     def exportReport (): 
+        
         outputPath = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
 
         with open (outputPath, 'w') as fo:
             
             rObject, results = lastResearch
-
             fo.write (rObject)
-
-            for i, result in enumerate(results):
-                print(i, "] ",result["wine_name"], "\n\n",result["review_note"], "\n\n", f"sentiment: {result['sentiment']}", "Price: ", result["wine_price"])
-
-                responseForResult = f"\n {'_'*50}\n  Result {i+1}\nWine: {result['wine_name']}\tWinery: {result['winery']}"
-
-                strResponse = f"{i} ] {result['wine_name']}\n\n{result['review_note']}\n\nsentiment: {result['sentiment']} Price: {result['wine_price']}"
-                print ("RISPOTA: ", strResponse)
-
-                fo.write(strResponse)
-
-            # for i, result in enumerate (results): 
-            #     fo.write (i, "] ",result["wine_name"], "\n\n",result["review_note"], "\n\n", f"sentiment: {result['sentiment']}", "Price: ", result["wine_price"])
-
-            # for result in enumerate(results):
-            #     fo.write (i, "] ",result["wine_name"], "tipo:", result["wine_type"], "\n", f"sentiment: {result['sentiment']}", "Price: ", result["wine_price"], "\n\n")
+            
+            for result in results:
+                fo.write(resultFormatter(result))
         
         print ("exported.")
 
@@ -229,22 +174,13 @@ def loadGUI (ix):
         query_string = queryText.get()
 
         default = ["wine_name", "style_description", "review_note", "wine_winery"]
-        priceInterval = None
-
-        # sentimentInQuery = (["M", "joy"])
-        # #sentimentInQuery = None
-
-        # entry_below_sentiment.delete(0, tk.END)
-        # entry_below_sentiment.insert(0, f"{sentimentRequest['level']} -> {sentimentRequest['emotion']}")
-
         sentimentInQuery = translateSentiment (sentimentRequest)
+        selected_numbers = [number_mapping[wine_type] for wine_type, var in zip(wine_types, wineTypes) if var.get() == 1]
 
         algorithm = False
         if not bm25Flag.get():
             if tfidfFlag.get():
                 algorithm = True
-
-        selected_numbers = [number_mapping[wine_type] for wine_type, var in zip(wine_types, wineTypes) if var.get() == 1]
 
         yearV = yearEntry.get()
         yearV = int(yearV) if yearV.strip() else None
@@ -267,13 +203,6 @@ def loadGUI (ix):
         else: 
             searchField = [mappingFields[selectedFields]]
 
-        print ("Wine Type: ", wineTypes)
-        print ("Wine Type: ", selected_numbers)
-        print ("YYYY : ", yearV)
-        print ("YYYY : ", minPV)
-        print ("YYYY : ", MaxPV)
-        # print ("Emotion: ", slider_horizontal_var)
-
         updateSentimentInfo (sentimentRequest)
 
         parameters = searchField, priceInterval, selected_numbers, sentimentInQuery, algorithm, thesaurusFlag, andFlag.get(), autoCorrectionFlag, yearV
@@ -282,42 +211,24 @@ def loadGUI (ix):
         global lastResearch 
         lastResearch = [question, results]
 
-        # result_text.delete(1.0, tk.END)
-        # for i, result in enumerate(results):
-        #     result_text.insert(tk.END, f"{i + 1}] {result['wine_name']}\n\n{result['review_note']}\n\nSentiment: {result['sentiment']}\n\n")
 
         if results:
             # result_text.tag_configure("tag", foreground="red")
             result_text.delete(1.0, tk.END)
             result_text.insert(tk.END, f"{len(results)} match(es).\n")
-            for i, result in enumerate(results):
-                # sresult_text.insert(tk.END, f"{i + 1}] {result['wine_name']}\n\n{result['review_note']}\n\nSentiment: {result['sentiment']}\n\n")
-                
-                #result_text.insert(tk.END, f"{i + 1}] {result['wine_name']}\n\n{result['review_note']}\n\nSentiment: {result['sentiment']}\n\n")
-                
-                # rString = f"{i + 1}] {result.score}\n{get_wine_type(result['wine_type'])} | {result['wine_name']} | {result['wine_year']} | Price: {result['wine_price']}\nNote: {result['review_note']}\nSentiment loaded: {result['sentiment']} \n{'_'*40}\n\n"
-                #rString = f"{i + 1}] {result.score}\n{get_wine_type(result['wine_type'])} | {result['wine_name']} | {result['wine_year']} | Price: {result['wine_price']}\nNote: {result['review_note']}\nSentiment loaded: {result['sentiment']} \n{'_'*40}\n\n"
-                
-                # formatted_result = format_result(result)
-                # result_text.insert(tk.END, formatted_result)  # Applica un tag per la formattazione
-                
+            
+            for i, result in enumerate(results):  
                 result_text.insert(tk.END, resultFormatter(result))
 
-                # result_text.insert(tk.END, rString)
-
-                #result_text.insert(tk.END, f"{i + 1}] {result.score}\n{get_wine_type(result['wine_type'])} | {result['wine_name']} | {result['wine_year']} | Price: {result['wine_price']}\nNote: {result['review_note']}\nSentiment loaded: {result['sentiment']} \n{'_'*40}\n\n")
-
         else: 
-            # result_text = scrolledtext.ScrolledText(right_frame, wrap="word", width=50, height=20, font=("Helvetica", 12), fg="white", bg="black")
+            result_text.delete(1.0, tk.END)
             result_text.config( fg="white", bg="black")
             result_text.insert(tk.END, "NO MATCHES FOUND")
             result_text.tag_configure("custom_tag", foreground="red", font=("Helvetica", 14, "bold"), justify='center')
-            #t.tag_configure("center", justify='center')
-            # Applica il tag al testo inserito
             result_text.tag_add("custom_tag", "1.0", "end")
-
-    # slider_horizontal_var = tk.DoubleVar()
     
+
+
     #* main window config
     root = tk.Tk()
     
@@ -381,7 +292,6 @@ def loadGUI (ix):
     Button(sentimentBar, text="sentiment", width=5, highlightthickness=0, bd=0, command=setSentimentConfig).grid(row=0, column=0, padx=10, pady=5, sticky="w")
     entry_below_sentiment = tk.Entry(sentimentBar, width=15)
     entry_below_sentiment.grid(row=0, column=1, padx=10, pady=5, sticky="w")
-    # entry_below_sentiment.bind("<Key>", disable_event)
 
     #* BAR: Field search for multifield and AND button
     fieldBar = Frame(left_frame, width=180, height=185, bg="#cb8e92")
@@ -405,8 +315,6 @@ def loadGUI (ix):
     Checkbutton(fieldBar, text="AND", variable=andFlag).grid(row=0, column=2, padx=10, pady=5, sticky="w")
 
     #* BAR: Environment
-    var = True
-    var = tk.BooleanVar(value=True)
 
     downBar = Frame(left_frame, width=180, height=185, bg="#d5833f", highlightthickness=0, bd=0)
     downBar.grid(row=6, column=0, padx=5, pady=5, sticky="n")
@@ -426,7 +334,6 @@ def loadGUI (ix):
     Checkbutton(environmentBar, text="TF-IDF", variable=tfidfFlag).grid(row=0, column=3, padx=10, pady=5, sticky="w")
     Checkbutton(environmentBar, text="BM25F", variable=bm25Flag).grid(row=0, column=4, padx=10, pady=5, sticky="w")
     
-
     #* Right Frame -> query and results
     queryText = Entry(right_frame, width=20)
     queryText.grid(row=0, column=0, padx=10, pady=5, sticky="e")
