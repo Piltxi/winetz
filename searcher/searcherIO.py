@@ -188,7 +188,6 @@ def exportTXT (outPath, data):
         
     print (f"data exported in {outPath}.\n")
 
-
 if __name__ == '__main__':
 
     ix = loadIndex (GUI=False)
