@@ -12,3 +12,7 @@ def maybeMeaning (text, tool):
 
     # Stampa suggerimenti
     print(matches)
+
+def thesaurusExtension():
+
+    pass
