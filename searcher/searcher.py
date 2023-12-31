@@ -13,7 +13,7 @@ from whoosh.qparser import MultifieldParser
 from whoosh.query import And, AndNot, Not, AndMaybe, Term
 
 from correctionsAnalysis import *
-from searcherIO import loadIndex, queryReply
+from searcherIO import loadIndex, queryReply, resultFormatter
 
 from searcherIO import printingResultsCLI
 
@@ -54,6 +54,50 @@ def translateSentiment (sentimentRequest):
 def loadGUI (ix): 
 
     global lastResearch
+
+    def get_wine_type(number):
+
+        number_mapping = {
+        "Red Wine": 1,
+        "White Wine": 2,
+        "Rosé": 3,
+        "Sparkling Wine": 4,
+        "Dessert Wine": 7,
+        "Fortified Wine": 24
+        }
+
+        print ("Wine Type Number loading: ", number)
+        reverse_mapping = {v: k for k, v in number_mapping.items()}
+        return reverse_mapping.get(int(number), "Tipo di vino non trovato")
+
+    def format_result(result):
+        i = result.rank + 1  # Utilizza la proprietà 'rank' di Whoosh per ottenere il numero del risultato
+
+        wine_type = get_wine_type(result['wine_type'])
+        wine_name = result['wine_name']
+        wine_year = result['wine_year']
+        wine_price = result['wine_price']
+        review_note = result['review_note']
+        sentiment = result['sentiment']
+        score = result.score
+
+        # Colore rosso per il nome del vino
+        # wine_name_colored = f"<font color='red'>{wine_name}</font>"
+
+        # Costruisci la stringa formattata con il nome del vino colorato
+        formatted_result = (
+            "\n"
+            f"{i}] Score: {score:.2f}\n"
+            f"{wine_type}: \t"
+            f"{wine_name}\t"
+            f"|{wine_year}|\t"
+            f"Price: {wine_price}\n"
+            f"Note: {review_note}\n"
+            f"Sentiment: {sentiment}\n"
+            f"{'_'*40}\n"
+        )
+
+        return formatted_result
 
     def updateSentimentInfo (sentimentRequest): 
         # entry_below_sentiment.delete(0, tk.END)
@@ -243,9 +287,26 @@ def loadGUI (ix):
         #     result_text.insert(tk.END, f"{i + 1}] {result['wine_name']}\n\n{result['review_note']}\n\nSentiment: {result['sentiment']}\n\n")
 
         if results:
+            # result_text.tag_configure("tag", foreground="red")
             result_text.delete(1.0, tk.END)
+            result_text.insert(tk.END, f"{len(results)} match(es).\n")
             for i, result in enumerate(results):
-                result_text.insert(tk.END, f"{i + 1}] {result['wine_name']}\n\n{result['review_note']}\n\nSentiment: {result['sentiment']}\n\n")
+                # sresult_text.insert(tk.END, f"{i + 1}] {result['wine_name']}\n\n{result['review_note']}\n\nSentiment: {result['sentiment']}\n\n")
+                
+                #result_text.insert(tk.END, f"{i + 1}] {result['wine_name']}\n\n{result['review_note']}\n\nSentiment: {result['sentiment']}\n\n")
+                
+                # rString = f"{i + 1}] {result.score}\n{get_wine_type(result['wine_type'])} | {result['wine_name']} | {result['wine_year']} | Price: {result['wine_price']}\nNote: {result['review_note']}\nSentiment loaded: {result['sentiment']} \n{'_'*40}\n\n"
+                #rString = f"{i + 1}] {result.score}\n{get_wine_type(result['wine_type'])} | {result['wine_name']} | {result['wine_year']} | Price: {result['wine_price']}\nNote: {result['review_note']}\nSentiment loaded: {result['sentiment']} \n{'_'*40}\n\n"
+                
+                # formatted_result = format_result(result)
+                # result_text.insert(tk.END, formatted_result)  # Applica un tag per la formattazione
+                
+                result_text.insert(tk.END, resultFormatter(result))
+
+                # result_text.insert(tk.END, rString)
+
+                #result_text.insert(tk.END, f"{i + 1}] {result.score}\n{get_wine_type(result['wine_type'])} | {result['wine_name']} | {result['wine_year']} | Price: {result['wine_price']}\nNote: {result['review_note']}\nSentiment loaded: {result['sentiment']} \n{'_'*40}\n\n")
+
         else: 
             # result_text = scrolledtext.ScrolledText(right_frame, wrap="word", width=50, height=20, font=("Helvetica", 12), fg="white", bg="black")
             result_text.config( fg="white", bg="black")
