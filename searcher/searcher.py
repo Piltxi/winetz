@@ -55,6 +55,22 @@ def loadGUI (ix):
 
     global lastResearch
 
+    def updateSentimentInfo (sentimentRequest): 
+        # entry_below_sentiment.delete(0, tk.END)
+        # entry_below_sentiment.insert(0, f"{sentimentRequest['level']} -> {sentimentRequest['emotion']}")
+
+        entry_below_sentiment.delete(0, tk.END)
+        if sentimentRequest['emotion'] == None: 
+            entry_below_sentiment.config(fg="blue")
+            entry_below_sentiment.insert(0, "Not Defined")
+
+        else:
+            entry_below_sentiment.config(fg="red")
+            if sentimentRequest['level'] == None:
+                entry_below_sentiment.insert(0, f"High -> {sentimentRequest['emotion']}")
+            else: 
+                entry_below_sentiment.insert(0, f"{sentimentRequest['level']} -> {sentimentRequest['emotion']}")
+
     def setSentimentConfig(): 
 
         def update_emotion(value):
@@ -62,6 +78,7 @@ def loadGUI (ix):
             emotion_label.config(text=f"Emotion: {current_emotion}")
             sentimentRequest['emotion'] = current_emotion
             print ("up emotion: ", sentimentRequest['emotion'])
+            sentimentRequest['level'] = None
 
         def update_level(value):
             current_level = levels[int(value)]
@@ -88,7 +105,7 @@ def loadGUI (ix):
             tk.Label(sentimentWindow, text=emotion).grid(row=2, column=i)
 
         # Etichetta per indicare l'emozione corrente
-        level_label = tk.Label(sentimentWindow, text="Emotion: ")
+        level_label = tk.Label(sentimentWindow, text="Level: ")
         level_label.grid(row=3, column=0, columnspan=4)
 
         # Slider con 4 posizioni fisse
@@ -99,6 +116,8 @@ def loadGUI (ix):
         levels = ["Low", "Middle-Low", "Middle-High", "High"]
         for i, level in enumerate(levels):
             tk.Label(sentimentWindow, text=level).grid(row=5, column=i)
+        
+        entry_below_sentiment.config(text=f"{str(sentimentRequest)}")
 
     def exportReport (): 
         outputPath = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
@@ -142,9 +161,22 @@ def loadGUI (ix):
         root.destroy()
         loadGUI(ix)
 
-    #! to finish
     def cleanParam (): 
         yearEntry.set("")
+        queryText.delete(0, tk.END)
+        sentimentRequest = {'emotion': None, 'level': None}
+        minPriceEntry.set("")
+        maxPriceEntry.set("")
+        andFlag.set(0)
+        bm25Flag.set(0)
+        tfidfFlag.set(0)
+        thesaurusFlag.set(0)
+        autoCorrectionFlag.set(0)
+        combo.set("in: [All fields]")
+        result_text.delete(1.0, tk.END)
+        entry_below_sentiment.delete(0, tk.END)
+        for var in wineTypes:
+            var.set(0)
 
     def disable_event(event):
         return "break"
@@ -157,6 +189,10 @@ def loadGUI (ix):
 
         # sentimentInQuery = (["M", "joy"])
         # #sentimentInQuery = None
+
+        # entry_below_sentiment.delete(0, tk.END)
+        # entry_below_sentiment.insert(0, f"{sentimentRequest['level']} -> {sentimentRequest['emotion']}")
+
         sentimentInQuery = translateSentiment (sentimentRequest)
 
         algorithm = False
@@ -194,15 +230,30 @@ def loadGUI (ix):
         print ("YYYY : ", MaxPV)
         # print ("Emotion: ", slider_horizontal_var)
 
+        updateSentimentInfo (sentimentRequest)
+
         parameters = searchField, priceInterval, selected_numbers, sentimentInQuery, algorithm, thesaurusFlag, andFlag.get(), autoCorrectionFlag, yearV
         question, results = queryReply (ix, parameters, query_string)
 
         global lastResearch 
         lastResearch = [question, results]
 
-        result_text.delete(1.0, tk.END)
-        for i, result in enumerate(results):
-            result_text.insert(tk.END, f"{i + 1}] {result['wine_name']}\n\n{result['review_note']}\n\nSentiment: {result['sentiment']}\n\n")
+        # result_text.delete(1.0, tk.END)
+        # for i, result in enumerate(results):
+        #     result_text.insert(tk.END, f"{i + 1}] {result['wine_name']}\n\n{result['review_note']}\n\nSentiment: {result['sentiment']}\n\n")
+
+        if results:
+            result_text.delete(1.0, tk.END)
+            for i, result in enumerate(results):
+                result_text.insert(tk.END, f"{i + 1}] {result['wine_name']}\n\n{result['review_note']}\n\nSentiment: {result['sentiment']}\n\n")
+        else: 
+            # result_text = scrolledtext.ScrolledText(right_frame, wrap="word", width=50, height=20, font=("Helvetica", 12), fg="white", bg="black")
+            result_text.config( fg="white", bg="black")
+            result_text.insert(tk.END, "NO MATCHES FOUND")
+            result_text.tag_configure("custom_tag", foreground="red", font=("Helvetica", 14, "bold"), justify='center')
+            #t.tag_configure("center", justify='center')
+            # Applica il tag al testo inserito
+            result_text.tag_add("custom_tag", "1.0", "end")
 
     # slider_horizontal_var = tk.DoubleVar()
     
@@ -211,8 +262,8 @@ def loadGUI (ix):
     
     root.title("wineTz")
     root.configure(bg="white")
-    root.minsize(850, 450)
-    root.maxsize(850, 450)
+    root.minsize(800, 450)
+    root.maxsize(800, 450)
 
     top_frame = Frame(root, relief="solid", borderwidth=0, bg="white")
     top_frame.pack(side="top", fill="both", expand=True)
@@ -269,6 +320,7 @@ def loadGUI (ix):
     Button(sentimentBar, text="sentiment", width=5, highlightthickness=0, bd=0, command=setSentimentConfig).grid(row=0, column=0, padx=10, pady=5, sticky="w")
     entry_below_sentiment = tk.Entry(sentimentBar, width=15)
     entry_below_sentiment.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+    # entry_below_sentiment.bind("<Key>", disable_event)
 
     #* BAR: Field search for multifield and AND button
     fieldBar = Frame(left_frame, width=180, height=185, bg="#cb8e92")
@@ -299,7 +351,8 @@ def loadGUI (ix):
     downBar.grid(row=6, column=0, padx=5, pady=5, sticky="n")
     Button(downBar, text="export", width=5, highlightthickness=0, bd=0, command=exportReport).grid(row=0, column=1, padx=10, pady=5, sticky="w")
     Button(downBar, text="refresh", width=5, highlightthickness=0, bd=0, command=cleanParam).grid(row=0, column=2, padx=10, pady=5, sticky="w")
-    
+    Button(downBar, text="index", width=5, highlightthickness=0, bd=0, command=loadIndexFromDialog).grid(row=0, column=3, padx=10, pady=5, sticky="w")
+
     autoCorrectionFlag = BooleanVar(value=True)
     thesaurusFlag = BooleanVar(value=False)
     tfidfFlag = BooleanVar(value=False)
@@ -312,7 +365,6 @@ def loadGUI (ix):
     Checkbutton(environmentBar, text="TF-IDF", variable=tfidfFlag).grid(row=0, column=3, padx=10, pady=5, sticky="w")
     Checkbutton(environmentBar, text="BM25F", variable=bm25Flag).grid(row=0, column=4, padx=10, pady=5, sticky="w")
     
-    Button(environmentBar, text="index", width=5, highlightthickness=0, bd=0, command=loadIndexFromDialog).grid(row=0, column=5, padx=10, pady=5, sticky="w")
 
     #* Right Frame -> query and results
     queryText = Entry(right_frame, width=20)
