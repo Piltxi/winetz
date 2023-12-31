@@ -55,11 +55,21 @@ def loadGUI (ix):
 
     global lastResearch
 
+    def changeAlgorithm (): 
+        
+        #! To do
+        
+        bm25Flag.set(0)
+        tfidfFlag.set(0)
+
     def updateSentimentInfo (sentimentRequest): 
-        # entry_below_sentiment.delete(0, tk.END)
-        # entry_below_sentiment.insert(0, f"{sentimentRequest['level']} -> {sentimentRequest['emotion']}")
+        
+        """
+            change info views in sentiment label on new choice event
+        """
 
         entry_below_sentiment.delete(0, tk.END)
+        
         if sentimentRequest['emotion'] == None: 
             entry_below_sentiment.config(fg="blue")
             entry_below_sentiment.insert(0, "Not Defined")
@@ -72,6 +82,18 @@ def loadGUI (ix):
                 entry_below_sentiment.insert(0, f"{sentimentRequest['level']} -> {sentimentRequest['emotion']}")
 
     def setSentimentConfig(): 
+
+        """
+            setSentimentConfig :: load window to insert sentiment filters
+            
+            when user press "sentiment" button, GUI loads new window in order 
+            to insert sentiment configuration filter by two sliders. 
+            first slider allows emotion choice between ["Fear", "Angry", "Sadness", "Joy"]
+            second slider allows level emotion choice between ["Low", "Middle-Low", "Middle-High", "High"]
+
+            idea: represent emotion by stars
+
+        """
 
         def update_emotion(value):
             current_emotion = emotions[int(value)]
@@ -88,31 +110,23 @@ def loadGUI (ix):
 
         sentimentWindow = Toplevel(root)
         sentimentWindow.title("Sentiment Configuration")
-        
-        #sentimentWindow.configure(bg="white")
-
-        # Etichetta per indicare l'emozione corrente
+    
         emotion_label = tk.Label(sentimentWindow, text="Emotion: ")
         emotion_label.grid(row=0, column=0, columnspan=4)
 
-        # Slider con 4 posizioni fisse
         slider = tk.Scale(sentimentWindow, from_=0, to=3, orient=tk.HORIZONTAL, command=update_emotion, showvalue=0, length=300)
         slider.grid(row=1, column=0, columnspan=4)
 
-        # Etichette separate per ogni emozione
         emotions = ["Fear", "Angry", "Sadness", "Joy"]
         for i, emotion in enumerate(emotions):
             tk.Label(sentimentWindow, text=emotion).grid(row=2, column=i)
 
-        # Etichetta per indicare l'emozione corrente
         level_label = tk.Label(sentimentWindow, text="Level: ")
         level_label.grid(row=3, column=0, columnspan=4)
 
-        # Slider con 4 posizioni fisse
         sliderLevel = tk.Scale(sentimentWindow, from_=0, to=3, orient=tk.HORIZONTAL, command=update_level, showvalue=0, length=300)
         sliderLevel.grid(row=4, column=0, columnspan=4)
 
-        # Etichette separate per ogni emozione
         levels = ["Low", "Middle-Low", "Middle-High", "High"]
         for i, level in enumerate(levels):
             tk.Label(sentimentWindow, text=level).grid(row=5, column=i)
@@ -122,10 +136,33 @@ def loadGUI (ix):
         sentimentWindow.resizable(False, False)
 
     def exportReport (): 
+
+        """
+            when user press "export" button
+            GUI loads new window to load output report path
+
+            after this, by searcherIO function, wineTz provides a .txt export of last research. 
+
+            idea: save and check output for query
+
+        """
+
         outputPath = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
         exportTXT(outputPath, lastResearch)
 
     def loadIndexFromDialog():
+
+        """
+
+            when user press "index" button, GUI loads new window
+            in order to select new index path. 
+
+            with invalid path wineTz loads GUI, but user can't insert quey
+
+            idea: change index data during wineTz execution
+
+        """
+
         inputPath = filedialog.askdirectory()
         
         try:
@@ -141,23 +178,39 @@ def loadGUI (ix):
         loadGUI(ix)
 
     def cleanParam (): 
-        yearEntry.set("")
-        queryText.delete(0, tk.END)
+
+        """
+            idea: wineTz works with a lot of filters research.
+            user must can refresh research to all parameters, in order to re-insert them
+        """
+
+        for flag in wineTypes:
+            flag.set(0)
+
         sentimentRequest = {'emotion': None, 'level': None}
+
         minPriceEntry.set("")
         maxPriceEntry.set("")
+        yearEntry.set("")
+
         andFlag.set(0)
         bm25Flag.set(0)
         tfidfFlag.set(0)
         thesaurusFlag.set(0)
         autoCorrectionFlag.set(0)
+
         combo.set("in: [All fields]")
+
+        queryText.delete(0, tk.END)
         result_text.delete(1.0, tk.END)
         entry_below_sentiment.delete(0, tk.END)
-        for var in wineTypes:
-            var.set(0)
 
     def disable_event(event):
+
+        """
+            disable event useful method to lock status of label
+        """
+
         return "break"
 
     def searcherButton (): 
@@ -204,7 +257,6 @@ def loadGUI (ix):
 
 
         if results:
-            # result_text.tag_configure("tag", foreground="red")
             result_text.delete(1.0, tk.END)
             result_text.insert(tk.END, f"{len(results)} match(es).\n")
             
@@ -218,7 +270,6 @@ def loadGUI (ix):
             result_text.tag_configure("custom_tag", foreground="red", font=("Helvetica", 14, "bold"), justify='center')
             result_text.tag_add("custom_tag", "1.0", "end")
     
-
 
     #* main window config
     root = tk.Tk()
@@ -283,6 +334,7 @@ def loadGUI (ix):
     Button(sentimentBar, text="sentiment", width=5, highlightthickness=0, bd=0, command=setSentimentConfig).grid(row=0, column=0, padx=10, pady=5, sticky="w")
     entry_below_sentiment = tk.Entry(sentimentBar, width=15)
     entry_below_sentiment.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+    entry_below_sentiment.bind("<Key>", disable_event)
 
     #* BAR: Field search for multifield and AND button
     fieldBar = Frame(left_frame, width=180, height=185, bg="#cb8e92")
@@ -322,8 +374,8 @@ def loadGUI (ix):
     environmentBar.grid(row=7, column=0, padx=5, pady=5, sticky="n")
     Checkbutton(environmentBar, text="Ac", variable=autoCorrectionFlag).grid(row=0, column=1, padx=10, pady=5, sticky="w")
     Checkbutton(environmentBar, text="Th", variable=thesaurusFlag).grid(row=0, column=2, padx=10, pady=5, sticky="w")
-    Checkbutton(environmentBar, text="TF-IDF", variable=tfidfFlag).grid(row=0, column=3, padx=10, pady=5, sticky="w")
-    Checkbutton(environmentBar, text="BM25F", variable=bm25Flag).grid(row=0, column=4, padx=10, pady=5, sticky="w")
+    Checkbutton(environmentBar, text="TF-IDF", variable=tfidfFlag, command=changeAlgorithm).grid(row=0, column=3, padx=10, pady=5, sticky="w")
+    Checkbutton(environmentBar, text="BM25F", variable=bm25Flag, command=changeAlgorithm).grid(row=0, column=4, padx=10, pady=5, sticky="w")
     
     #* Right Frame -> query and results
     queryText = Entry(right_frame, width=20)
