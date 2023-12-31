@@ -43,7 +43,7 @@ def loadIndex (GUI):
 
 def queryReply (ix, parameters, queryText): 
 
-    searchField, priceInterval, wineTypes, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, year = parameters
+    UIMode, searchField, priceInterval, wineTypes, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, year = parameters
     
     #* parser parameters init
     scoreMethod = scoring.TF_IDF() if algorithm else scoring.BM25F()
@@ -113,9 +113,10 @@ def queryReply (ix, parameters, queryText):
     if andFlag:
         searchMode = "MODE: AND-Query\t"
 
-    rObject = "\n______request object______\n" + f"inTEXT: [{queryText}]\t inQUERY: {queryText}\nQUERY: " + str(mainQuery) + "\nFILTERS: " + str(combined_filter) +"\n" + "FIELD(s): "+ str(searchField) + "\n" + algoString + searchMode + "inSENTIMENT: " + str(sentimentRequest) + "\n" + str("_"*30) + "\n"
+    rObject = objectFormatter (queryText, queryText, mainQuery, combined_filter, searchField, searchMode, sentimentRequest, algoString)
     
-    print (rObject)
+    if UIMode:
+        print (rObject)
 
     results = searcher.search(mainQuery, filter = combined_filter, limit=1000)
     return rObject, results
@@ -134,7 +135,7 @@ def resultFormatter (result):
         reverse_mapping = {v: k for k, v in number_mapping.items()}
         typeName = reverse_mapping.get(int(result['wine_type']), "ND type")
 
-        i = result.rank + 1  # Utilizza la proprietà 'rank' di Whoosh per ottenere il numero del risultato
+        i = result.rank + 1
 
         wine_type = typeName
         wine_name = result['wine_name']
@@ -144,10 +145,6 @@ def resultFormatter (result):
         sentiment = result['sentiment']
         score = result.score
 
-        # Colore rosso per il nome del vino
-        # wine_name_colored = f"<font color='red'>{wine_name}</font>"
-
-        # Costruisci la stringa formattata con il nome del vino colorato
         formatted_result = (
             "\n"
             f"{i}] Score: {score:.2f}\n"
@@ -162,16 +159,40 @@ def resultFormatter (result):
 
         return formatted_result
 
-def printingResultsCLI (results):
+def printResultsCLI (rObject, results):
 
-    print ("Printing results: ")
-    for i, result in enumerate(results):
-            print(i, "] ",result["wine_name"], "tipo:", result["wine_type"], "\n", f"sentiment: {result['sentiment']}", "Price: ", result["wine_price"], "\n\n")
+    print (rObject)
+    print ("\n")
+    print (f"{len(results)} match(es).\n")
+
+    for result in results: 
+        print (resultFormatter(result))
+
+    print (f"{'*'*40}\nend of results")
+
+def objectFormatter (inText, queryText, mainQuery, combined_filter, searchField, searchMode, sentimentRequest, algoString): 
+
+    rObject = "\n______request object______\n" + f"inTEXT: [{inText}]\t inQUERY: {queryText}\nQUERY: " + str(mainQuery) + "\nFILTERS: " + str(combined_filter) +"\n" + "FIELD(s): "+ str(searchField) + "\n" + algoString + searchMode + "inSENTIMENT: " + str(sentimentRequest) + "\n" + str("_"*30)
+
+    return rObject
+
+def exportTXT (outPath, data):
+    
+    rObject, results = data
+
+    with open (outPath, 'w') as fo:
+    
+            fo.write (rObject)
+            for result in results:
+                fo.write(resultFormatter(result))
+        
+    print (f"data exported in {outPath}.\n")
+
 
 if __name__ == '__main__':
 
-    ix = loadIndex (GUI=True)
-    
+    ix = loadIndex (GUI=False)
+
     searchField = ["wine_name", "style_description", "review_note", "wine_winery"]
     priceInterval = [(None), (None)]
     # wineType = ["1"]
@@ -186,7 +207,6 @@ if __name__ == '__main__':
     #sentimentRequest = (["M", "joy"])
 
     sentimentRequest = None
-
 
     year = None
 
