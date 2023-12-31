@@ -13,9 +13,9 @@ from whoosh.qparser import MultifieldParser
 from whoosh.query import And, AndNot, Not, AndMaybe, Term
 
 from correctionsAnalysis import *
-from searcherIO import loadIndex, queryReply, resultFormatter
+from searcherIO import loadIndex, queryReply, resultFormatter, exportTXT
 
-from searcherIO import printingResultsCLI
+# from searcherIO import printingResultsCLI
 
 sentimentRequest = {'emotion': None, 'level': None}
 
@@ -122,18 +122,8 @@ def loadGUI (ix):
         sentimentWindow.resizable(False, False)
 
     def exportReport (): 
-        
         outputPath = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
-
-        with open (outputPath, 'w') as fo:
-            
-            rObject, results = lastResearch
-            fo.write (rObject)
-            
-            for result in results:
-                fo.write(resultFormatter(result))
-        
-        print ("exported.")
+        exportTXT(outputPath, lastResearch)
 
     def loadIndexFromDialog():
         inputPath = filedialog.askdirectory()
@@ -205,7 +195,8 @@ def loadGUI (ix):
 
         updateSentimentInfo (sentimentRequest)
 
-        parameters = searchField, priceInterval, selected_numbers, sentimentInQuery, algorithm, thesaurusFlag, andFlag.get(), autoCorrectionFlag, yearV
+        UIMode = True
+        parameters = UIMode, searchField, priceInterval, selected_numbers, sentimentInQuery, algorithm, thesaurusFlag, andFlag.get(), autoCorrectionFlag, yearV
         question, results = queryReply (ix, parameters, query_string)
 
         global lastResearch 
