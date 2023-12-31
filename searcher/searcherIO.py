@@ -178,7 +178,8 @@ def objectFormatter (inText, queryText, mainQuery, combined_filter, searchField,
 
 def exportTXT (outPath, data):
     
-    rObject, results = data
+    rObject = data[0]
+    results = data [1]
 
     with open (outPath, 'w') as fo:
     

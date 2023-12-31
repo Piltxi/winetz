@@ -15,9 +15,8 @@ from whoosh.query import And, AndNot, Not, AndMaybe, Term
 from correctionsAnalysis import *
 from searcherIO import loadIndex, queryReply, resultFormatter, exportTXT
 
-# from searcherIO import printingResultsCLI
-
 sentimentRequest = {'emotion': None, 'level': None}
+lastResearch = []
 
 def translateSentiment (sentimentRequest): 
     
@@ -214,6 +213,14 @@ def loadGUI (ix):
         return "break"
 
     def searcherButton (): 
+
+        """
+
+            idea: start a new query with research parameters and filters specified in gui
+
+            "searcher" button pick data stored in label of gui and start queryReply function from searcherIO
+        """
+
         query_string = queryText.get()
 
         default = ["wine_name", "style_description", "review_note", "wine_winery"]
@@ -254,7 +261,6 @@ def loadGUI (ix):
 
         global lastResearch 
         lastResearch = [question, results]
-
 
         if results:
             result_text.delete(1.0, tk.END)
