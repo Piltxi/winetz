@@ -120,6 +120,48 @@ def queryReply (ix, parameters, queryText):
     results = searcher.search(mainQuery, filter = combined_filter, limit=1000)
     return rObject, results
 
+def resultFormatter (result): 
+        
+        number_mapping = {
+            "Red Wine": 1,
+            "White Wine": 2,
+            "Rosé": 3,
+            "Sparkling Wine": 4,
+            "Dessert Wine": 7,
+            "Fortified Wine": 24
+        }
+
+        reverse_mapping = {v: k for k, v in number_mapping.items()}
+        typeName = reverse_mapping.get(int(result['wine_type']), "ND type")
+
+        i = result.rank + 1  # Utilizza la proprietà 'rank' di Whoosh per ottenere il numero del risultato
+
+        wine_type = typeName
+        wine_name = result['wine_name']
+        wine_year = result['wine_year']
+        wine_price = result['wine_price']
+        review_note = result['review_note']
+        sentiment = result['sentiment']
+        score = result.score
+
+        # Colore rosso per il nome del vino
+        # wine_name_colored = f"<font color='red'>{wine_name}</font>"
+
+        # Costruisci la stringa formattata con il nome del vino colorato
+        formatted_result = (
+            "\n"
+            f"{i}] Score: {score:.2f}\n"
+            f"{wine_type}: \t"
+            f"{wine_name}\t"
+            f"|{wine_year}|\t"
+            f"Price: {wine_price}\n"
+            f"Note: {review_note}\n"
+            f"Sentiment: {sentiment}\n"
+            f"{'_'*40}\n"
+        )
+
+        return formatted_result
+
 def printingResultsCLI (results):
 
     print ("Printing results: ")
