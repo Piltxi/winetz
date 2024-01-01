@@ -4,13 +4,11 @@ def development ():
         "wine_type_ids[]": ["1"],
         "country_codes[]":"it",
 
-        "min_rating" : "4.2",
-        "price_range_max": "9",
+        "min_rating" : "1",
+        "price_range_max": "20",
 
         } 
-
     languageList = ["it"]
-
     return params, languageList
 
 def production (): 
