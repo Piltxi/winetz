@@ -77,10 +77,11 @@ if __name__ == '__main__':
 
     itAnalyzer = LanguageAnalyzer('it', cachesize=-1)
     classifierIT, classifierEN = initClassifier (args.offline)
+    enAnlyzer = LanguageAnalyzer ('en', cachesize=-1)
 
     schema = Schema(
         wine_type = NUMERIC(int, stored=True),
-        style_description = TEXT(stored=True),
+        style_description = TEXT(stored=True, analyzer=enAnlyzer),
         wine_name = TEXT(stored=True, analyzer=itAnalyzer),
         user_rating = NUMERIC(float, stored=True),
         review_note = TEXT(stored=True, analyzer=itAnalyzer),
