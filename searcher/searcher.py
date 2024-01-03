@@ -1,6 +1,3 @@
-import os
-import argparse
-
 import tkinter as tk
 from tkinter import Scale, Toplevel, ttk
 from tkinter import filedialog
@@ -9,8 +6,6 @@ from tkinter import StringVar, IntVar, DoubleVar, BooleanVar
 from tkinter import messagebox
 
 from whoosh.index import open_dir
-from whoosh.qparser import MultifieldParser
-from whoosh.query import And, AndNot, Not, AndMaybe, Term
 
 from correctionsAnalysis import *
 from searcherIO import loadIndex, queryReply, resultFormatter, exportTXT
@@ -186,6 +181,7 @@ def loadGUI (ix):
         for flag in wineTypes:
             flag.set(0)
 
+        global sentimentRequest
         sentimentRequest = {'emotion': None, 'level': None}
 
         minPriceEntry.set("")
@@ -364,7 +360,6 @@ def loadGUI (ix):
     Checkbutton(fieldBar, text="AND", variable=andFlag).grid(row=0, column=2, padx=10, pady=5, sticky="w")
 
     #* BAR: Environment
-
     downBar = Frame(left_frame, width=180, height=185, bg="#d5833f", highlightthickness=0, bd=0)
     downBar.grid(row=6, column=0, padx=5, pady=5, sticky="n")
     Button(downBar, text="export", width=5, highlightthickness=0, bd=0, command=exportReport).grid(row=0, column=1, padx=10, pady=5, sticky="w")
@@ -395,8 +390,8 @@ def loadGUI (ix):
 
 if __name__ == '__main__':
 
-    ix = loadIndex (GUI=True)
-    
     correctionTool = initCorrectionTool ()
 
+    ix = loadIndex (GUI=True)
+    
     loadGUI(ix)
