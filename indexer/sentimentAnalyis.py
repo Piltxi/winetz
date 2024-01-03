@@ -1,12 +1,13 @@
 from transformers import TextClassificationPipeline, AutoModelForSequenceClassification, AutoTokenizer
 from transformers import pipeline
 
-def setSentiment (content, language, classifierIT, classifierEN): 
+def setSentiment (content, language, classifiers): 
 
     '''
         setSentiment returns the various scores of the sentiment analysis. 
         the method is implemented separately in order to correctly handle the library output.
     '''
+    classifierIT, classifierEN = classifiers
 
     if language == 'it':
         result = classifierIT (content)
@@ -25,7 +26,7 @@ def setSentiment (content, language, classifierIT, classifierEN):
     print (f"An error occurred during the sentiment analysis process: language detected: {language}")
     quit()
 
-def initClassifier (offlineFlag): 
+def initClassifiers (offlineFlag): 
 
     '''
         initClassifier is used to specify the classifiers to perform sentiment analysis
@@ -40,7 +41,7 @@ def initClassifier (offlineFlag):
         tokenizer = AutoTokenizer.from_pretrained(pathModel, use_fast=False)
         classifierIT = TextClassificationPipeline(model=model, tokenizer=tokenizer, task="text-classification")
 
-        ''' #* Loading EN classifier
+        '''#* Loading EN classifier
         pathModel = "../models/twitter-roberta-base-sentiment-latest"
         model = AutoModelForSequenceClassification.from_pretrained(pathModel)
         tokenizer = AutoTokenizer.from_pretrained(pathModel, use_fast=False)
@@ -54,8 +55,9 @@ def initClassifier (offlineFlag):
         classifierIT = pipeline ("text-classification", model = 'MilaNLProc/feel-it-italian-emotion', top_k=2)
     
         #* Loading EN classifier
-        classifierEN = pipeline ("sentiment-analysis", model="cardiffnlp/twitter-roberta-base-sentiment-latest", tokenizer="cardiffnlp/twitter-roberta-base-sentiment-latest")
+        # classifierEN = pipeline ("sentiment-analysis", model="cardiffnlp/twitter-roberta-base-sentiment-latest", tokenizer="cardiffnlp/twitter-roberta-base-sentiment-latest")
 
         print("Models downloaded from internet.")
 
-    return classifierIT, classifierIT
+    # return [classifierIT, classifierEN]
+    return [classifierIT, classifierIT]

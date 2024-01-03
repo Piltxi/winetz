@@ -6,13 +6,9 @@ from tqdm import tqdm
 
 from whoosh.fields import *
 from whoosh.index import create_in
-from whoosh.qparser import MultifieldParser
-from whoosh.qparser import QueryParser
 from whoosh.analysis import LanguageAnalyzer
-from whoosh.query import NumericRange
-from whoosh.query import And, AndNot, Not, AndMaybe, Term
 
-from sentimentAnalyis import setSentiment, initClassifier
+from sentimentAnalyis import setSentiment, initClassifiers
 
 def resetIndex():
 
@@ -76,8 +72,9 @@ if __name__ == '__main__':
     '''
 
     itAnalyzer = LanguageAnalyzer('it', cachesize=-1)
-    classifierIT, classifierEN = initClassifier (args.offline)
     enAnlyzer = LanguageAnalyzer ('en', cachesize=-1)
+
+    classifiers = initClassifiers (args.offline)
 
     schema = Schema(
         wine_type = NUMERIC(int, stored=True),
@@ -98,15 +95,14 @@ if __name__ == '__main__':
     ix = create_in(indexPath, schema)
     writer = ix.writer(procs=4, limitmb=64, multisegment=True)
 
-    total_documents = sum(len(wine["reviews"]) for wine_type in datas["wine_types"] for style in wine_type["styles"] for wine in style["wines"])
-    
-    with tqdm(total=total_documents, desc="Indicizzazione") as pbar:
+    totDocs = sum(len(wine["reviews"]) for wine_type in datas["wine_types"] for style in wine_type["styles"] for wine in style["wines"])
+    with tqdm(total=totDocs, desc="Indexing") as pbar:
         for wine_type in datas["wine_types"]:
             for style in wine_type["styles"]:
                     for wine in style["wines"]:
                             for review in wine["reviews"]:
                                 
-                                sentiment = setSentiment (review["Note"], review["Language"], classifierIT, classifierEN)
+                                sentiment = setSentiment (review["Note"], review["Language"], classifiers)
                                 
                                 doc = {
                                     "wine_type": str(wine_type["wine_Type"]),
@@ -127,3 +123,5 @@ if __name__ == '__main__':
 
     print("Committing final changes...")
     writer.commit()
+
+    
