@@ -3,19 +3,49 @@ import requests
 import pandas as pd
 from tqdm import tqdm
 from datetime import datetime
+import signal
+import sys
 
 from crawio import * 
 from checkCrawler import *
 
-def getWine (wine_id, year, page):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0",
-    }
+def signalHandler(sig, frame):
+    
+    print("Ctrl+C received; starting storage procedures\n")
+    
+    timing = datetime.now().strftime("%H.%M")
+    message = "SH recovered" + " " + timing
+    exportCSV ("wine", mainwine_dataframe, message)
+    exportCSV ("style", mainstyle_dataframe, message)
+    # exportCSV ("reviews", mainratings_dataframe, message)
+    checkWineTz(4, message)
 
-    api_url = f"https://www.vivino.com/api/wines/{wine_id}/reviews?per_page=25&year={year}&page={page}"
-    data = requests.get(api_url, headers=headers).json()
+    sys.exit(0)
 
-    return data
+def getWine(wine_id, year, page):
+    
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        }
+
+        api_url = f"https://www.vivino.com/api/wines/{wine_id}/reviews?per_page=25&year={year}&page={page}"
+        response = requests.get(api_url, headers=headers)
+        response.raise_for_status()
+
+        data = response.json()
+        return data
+
+    except requests.exceptions.RequestException as req_err:
+        print(f"Request error: {req_err}")
+
+    except json.JSONDecodeError as json_err:
+        print(f"JSON decoding error: {json_err}")
+
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+    return None
   
 def wineCrawler (verbose, wineParameters): 
 
@@ -132,11 +162,11 @@ def wineCrawler (verbose, wineParameters):
                                 progress_bar.update(1)
 
                         else:
-                            continue  # Salta l'iterazione corrente e passa al prossimo elemento
+                            continue
                     else:
-                        continue  # Salta l'iterazione corrente e passa al prossimo elemento
+                        continue
                 else:
-                    continue  # Salta l'iterazione corrente e passa al prossimo elemento
+                    continue
 
         if not verbose: 
             progress_bar.close()
@@ -153,10 +183,13 @@ def wineCrawler (verbose, wineParameters):
         if not verbose: 
             progress_bar.close()
 
+        print ("saving with exception...")
+        mainwine_dataframe = mainwine_dataframe.drop_duplicates(subset="ID")
         timing = datetime.now().strftime("%H.%M")
         message = "recovered" + " " + timing
         exportCSV ("wine", mainwine_dataframe, message)
         exportCSV ("style", mainstyle_dataframe, message)
+
         checkWineTz(4, message)
     
     return mainwine_dataframe, mainstyle_dataframe
@@ -180,6 +213,15 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
                     print(f'Getting info about wine {row["ID"]}-{row["Year"]} Page {page}')
 
                 d = getWine(row["ID"], row["Year"], page)
+
+                if d is None: 
+
+                    print ("] ERRROR occurred while downloading reviews; data should have been stored.")
+                    
+                    timing = datetime.now().strftime("%H.%M")
+                    message = "recovered" + " " + timing
+                    exportCSV ("reviews", mainratings_dataframe, message)
+                    checkWineTz(4, message)
 
                 if not d["reviews"]:
                     
@@ -234,6 +276,7 @@ def reviewsCrawler (verbose, wineDF, selectedLanguages):
         if not verbose: 
             progress_bar.close()
         
+        print ("saving with exception...")
         timing = datetime.now().strftime("%H.%M")
         message = "recovered" + " " + timing
         exportCSV ("reviews", mainratings_dataframe, message)
@@ -268,6 +311,8 @@ def main (verbose, reset, specify, development, production, file):
 
 if __name__ == "__main__":
     
+    signal.signal(signal.SIGINT, signalHandler)
+
     parser = argparse.ArgumentParser(description="WineTz Crawler v.2")
     parser.add_argument("-d", "--development", action="store_true", help="debug function for developer")
     parser.add_argument("-s", "--specify", action="store_true", help="specify filter for wine search")
