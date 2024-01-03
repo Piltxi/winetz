@@ -4,6 +4,7 @@ import subprocess
 import os
 import json
 from datetime import datetime
+import csv
 
 """
 wine.csv -> ID, Winery, Name, Year, Style, Rating, Rates count, Type, Price
@@ -59,6 +60,28 @@ merged_df -> idRev,Language,User Rating,Note,CreatedAt,wine_ID,wine_Winery,wine_
  16  style_Nation       120 non-null    object
 
 """
+
+def loadFromCSV (filePath):
+    data = []
+    header = None
+
+    try:
+        with open(filePath, 'r', encoding='utf-8', errors='replace') as csv_file:
+            csv_reader = csv.reader(csv_file)
+            header = next(csv_reader)
+
+            for row in csv_reader:
+                data.append(row)
+    except csv.Error as e:
+        print(f"] error during csv reading: {e}")
+        return None
+
+    if header is not None:
+        dataframe = pd.DataFrame(data, columns=header)
+        return dataframe
+    else:
+        print("] error during csv reading: header not found")
+        return None
 
 def valueTypeConverter (input, type):
 
@@ -174,9 +197,9 @@ def loadStructure (path, directory_name, currentTime):
         except subprocess.CalledProcessError as e:
             print(f"Error in creating the directory: {e}")
 
-    reviews_df = pd.read_csv(f'{path}/reviews.csv')
-    wine_df = pd.read_csv(f'{path}/wine.csv')
-    style_df = pd.read_csv(f'{path}/style.csv')
+    reviews_df = loadFromCSV(f'{path}/reviews.csv')
+    wine_df = loadFromCSV(f'{path}/wine.csv')
+    style_df = loadFromCSV(f'{path}/style.csv')
 
     # filling null fields with empty strings
     reviews_df = reviews_df.fillna('')
@@ -194,7 +217,6 @@ def loadStructure (path, directory_name, currentTime):
     quit()'''
 
     reviews_df = reviews_df.drop_duplicates(subset=['Note', 'idWine'])
-    
     reviews_df = reviews_df[reviews_df['Language'] != 'en']
 
     merged_df = pd.merge(reviews_df, wine_df, left_on='idWine', right_on='wine_ID', how='inner')
@@ -226,6 +248,8 @@ def loadStructure (path, directory_name, currentTime):
     outPath = subDirectoryArchive + nameFile
     merged_df.to_csv(outPath, index = False)
     print(f"Results [CSV] exported in {outPath}.")
+
+    return merged_df
 
 def resetDataset():
 
@@ -262,3 +286,4 @@ if __name__ == '__main__':
         directory_name = input("Type path directory of the final dataset> ")
 
     dataframe = loadStructure(inputPath, directory_name, currentTime)
+    print ("Total size of dataset: ", dataframe.shape)
