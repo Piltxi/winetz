@@ -7,7 +7,6 @@ from tkinter import messagebox
 
 from whoosh.index import open_dir
 
-from correctionsAnalysis import *
 from searcherIO import loadIndex, queryReply, resultFormatter, exportTXT
 
 sentimentRequest = {'emotion': None, 'level': None}
@@ -49,13 +48,16 @@ def loadGUI (ix):
 
     global lastResearch
 
-    def changeAlgorithm (): 
-        
-        #! To do
-        
-        bm25Flag.set(0)
-        tfidfFlag.set(0)
+    def changeAlgorithm(selected_algorithm):
 
+        print(f"Selected algorithm: {selected_algorithm}")
+
+        if selected_algorithm == "TF-IDF":
+            bm25Flag.set(0)
+        
+        if selected_algorithm == "BM25F":
+            tfidfFlag.set(0)
+        
     def updateSentimentInfo (sentimentRequest): 
         
         """
@@ -252,7 +254,7 @@ def loadGUI (ix):
         updateSentimentInfo (sentimentRequest)
 
         UIMode = True
-        parameters = UIMode, searchField, priceInterval, selected_numbers, sentimentInQuery, algorithm, thesaurusFlag, andFlag.get(), autoCorrectionFlag, yearV
+        parameters = UIMode, searchField, priceInterval, selected_numbers, sentimentInQuery, algorithm, thesaurusFlag.get(), andFlag.get(), autoCorrectionFlag.get(), yearV
         question, results = queryReply (ix, parameters, query_string)
 
         global lastResearch 
@@ -260,7 +262,7 @@ def loadGUI (ix):
 
         if results:
             result_text.delete(1.0, tk.END)
-            result_text.insert(tk.END, f"{len(results)} match(es).\n")
+            result_text.insert(tk.END, f"{len(results)} match(es).\n\n")
             
             for i, result in enumerate(results):  
                 result_text.insert(tk.END, resultFormatter(result))
@@ -343,12 +345,12 @@ def loadGUI (ix):
     fieldBar.grid(row=5, column=0, padx=5, pady=5, sticky="n")
     Label(fieldBar, text="Field", relief="raised").grid(row=0, column=0, padx=5, pady=5, sticky="w")
     
-    combo_options = ["in: [All fields]", "in: [Wine Name]", "in: [Vinery]", "in: [Review]", "in: [Description]"]
+    combo_options = ["in: [All fields]", "in: [Wine Name]", "in: [Winery]", "in: [Review]", "in: [Description]"]
     default = ["wine_name", "style_description", "review_note", "wine_winery"]
     mappingFields = {
         "in: [All fields]" : default,
         "in: [Wine Name]" : "wine_name", 
-        "in: [Vinery]" : "wine_winery",
+        "in: [Winery]" : "wine_winery",
         "in: [Review]" : "review_note",
         "in: [Description]" : "style_description"
     }
@@ -375,8 +377,8 @@ def loadGUI (ix):
     environmentBar.grid(row=7, column=0, padx=5, pady=5, sticky="n")
     Checkbutton(environmentBar, text="Ac", variable=autoCorrectionFlag).grid(row=0, column=1, padx=10, pady=5, sticky="w")
     Checkbutton(environmentBar, text="Th", variable=thesaurusFlag).grid(row=0, column=2, padx=10, pady=5, sticky="w")
-    Checkbutton(environmentBar, text="TF-IDF", variable=tfidfFlag, command=changeAlgorithm).grid(row=0, column=3, padx=10, pady=5, sticky="w")
-    Checkbutton(environmentBar, text="BM25F", variable=bm25Flag, command=changeAlgorithm).grid(row=0, column=4, padx=10, pady=5, sticky="w")
+    Checkbutton(environmentBar, text="TF-IDF", variable=tfidfFlag, command=lambda: changeAlgorithm("TF-IDF"), indicatoron=False).grid(row=0, column=3, padx=10, pady=5, sticky="w")
+    Checkbutton(environmentBar, text="BM25F", variable=bm25Flag, command=lambda: changeAlgorithm("BM25F"), indicatoron=False).grid(row=0, column=4, padx=10, pady=5, sticky="w")
     
     #* Right Frame -> query and results
     queryText = Entry(right_frame, width=20)
@@ -390,8 +392,5 @@ def loadGUI (ix):
 
 if __name__ == '__main__':
 
-    correctionTool = initCorrectionTool ()
-
     ix = loadIndex (GUI=True)
-    
     loadGUI(ix)

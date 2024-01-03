@@ -1,11 +1,11 @@
 import os
 
 from whoosh.index import open_dir
-from whoosh.qparser import MultifieldParser, AndGroup, OrGroup, QueryParser
+from whoosh.qparser import MultifieldParser, AndGroup, OrGroup
 from whoosh.query import And, AndNot, Not, AndMaybe, Term, Or
 from whoosh.query import NumericRange
 from whoosh import scoring
-from autocorrect import Speller
+from nltk.corpus import wordnet
 
 import tkinter as tk
 from tkinter import Tk, messagebox
@@ -19,7 +19,7 @@ def loadIndex (GUI):
             
             root = Tk()
             root.withdraw()
-            messagebox.showerror('wineTz', 'The index was not loaded. \n\nThe interface will launch, but enter the index manually via the button.')
+            messagebox.showerror('wineTz', 'The index was not loaded. \n\nThe interface will launch, but you have to load the index manually via the button.')
             root.after(1, root.destroy)
             root.mainloop()
             
@@ -41,6 +41,18 @@ def loadIndex (GUI):
     
     return ix
 
+def searchFromThesaurus (sentence): 
+    words = sentence.split()
+    synonyms = []
+
+    for word in words:
+        synonyms = [lemma.name() for syn in wordnet.synsets(word, lang='ita') for lemma in syn.lemmas('ita')]
+        synonyms.extend(synonyms)
+
+    synonyms = list(set(synonyms))
+
+    return synonyms
+
 def queryReply (ix, parameters, queryText): 
 
     UIMode, searchField, priceInterval, wineTypes, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, year = parameters
@@ -54,8 +66,29 @@ def queryReply (ix, parameters, queryText):
 
     #* TEXT in query
     mainQuery = parser.parse(queryText)
+    
+    queryCopy = queryText
+    queryInWork = [queryCopy, queryCopy, queryCopy]
 
-    #! Todo: thesaurus and correction
+    # Whoosh correction tool 
+    if correctionFlag: 
+        corrected_query = searcher.correct_query(mainQuery, queryText) 
+        if corrected_query.query != mainQuery:
+            queryInWork = [queryCopy, corrected_query.string, corrected_query.string]
+            mainQuery = parser.parse(corrected_query.string)
+            if UIMode:
+                messagebox.showinfo("wineTz", f"matches \"{corrected_query.string}\"")
+
+    # Wordnet tool 
+    if thesaurusFlag:
+        synonyms = searchFromThesaurus (queryInWork[1])
+        stringResearch = f"{' '.join(synonyms)}" if synonyms else queryInWork[1]
+        if stringResearch != queryInWork[1]:
+            queryInWork = [queryCopy, queryInWork[1], stringResearch]
+            mainQuery = parser.parse(stringResearch)
+            print ("with thesaurus extension: ", stringResearch)
+            if UIMode:
+                    messagebox.showinfo("wineTz", f"matches \"{stringResearch}\"")
 
     #* PRICE in query
     if priceInterval != None:
@@ -113,12 +146,13 @@ def queryReply (ix, parameters, queryText):
     if andFlag:
         searchMode = "MODE: AND-Query\t"
 
-    rObject = objectFormatter (queryText, queryText, mainQuery, combined_filter, searchField, searchMode, sentimentRequest, algoString)
+    results = searcher.search(mainQuery, filter = combined_filter, limit=1000)
+    
+    rObject = objectFormatter (queryInWork[0], queryInWork[1], queryInWork[2],mainQuery, combined_filter, searchField, searchMode, sentimentRequest, algoString, len(results))
     
     if UIMode:
         print (rObject)
 
-    results = searcher.search(mainQuery, filter = combined_filter, limit=1000)
     return rObject, results
 
 def resultFormatter (result): 
@@ -147,16 +181,13 @@ def resultFormatter (result):
         score = result.score
 
         formatted_result = (
-            # "\n"
-            #f"{'_'*40}\n"
-            f"{i}] Score: {score:.2f}\n"
+            f"{i}] Score: {score:.2f}\t| Sentiment Score: {sentiment} |\n"
             f"{wine_type}: "
             f"{wine_name}\t"
             f"|{wine_year}|\t"
             f"Winery: {wine_winery}\t"
             f"|{wine_price}€|\n"
             f"Note: {review_note}\n"
-            f"Sentiment: {sentiment}\n"
             f"{'_'*40}\n"
         )
 
@@ -173,9 +204,28 @@ def printResultsCLI (rObject, results):
 
     print (f"{'*'*40}\nend of results")
 
-def objectFormatter (inText, queryText, mainQuery, combined_filter, searchField, searchMode, sentimentRequest, algoString): 
+def objectFormatter (inText, inQuery, finalText, mainQuery, combined_filter, searchField, searchMode, sentimentRequest, algoString, nMatches): 
 
-    rObject = "\n______request object______\n" + f"inTEXT: [{inText}]\t inQUERY: {queryText}\nQUERY: " + str(mainQuery) + "\nFILTERS: " + str(combined_filter) +"\n" + "FIELD(s): "+ str(searchField) + "\n" + algoString + searchMode + "inSENTIMENT: " + str(sentimentRequest) + "\n" + str("_"*30)
+    rObject = (
+        "\n______request object______\n"
+        f"inTEXT: [{inText}]\t inQUERY: [{inQuery}]\n"
+        f"extended inQUERY: [{finalText}]\n"
+        f"QUERY: {str(mainQuery)}\n"
+        f"FILTERS: {str(combined_filter)}\n"
+        f"FIELD(s): {str(searchField)}\n"
+        f"{algoString} {searchMode} inSENTIMENT: {str(sentimentRequest)} \n"
+        f"\n{nMatches}  match(es).\n"
+        f"{str('_'*30)}"
+    ) if inQuery != finalText else (
+            "\n______request object______\n"
+            f"inTEXT: [{inText}]\t inQUERY: [{inQuery}]\n"
+            f"QUERY: {str(mainQuery)}\n"
+            f"FILTERS: {str(combined_filter)}\n"
+            f"FIELD(s): {str(searchField)}\n"
+            f"{algoString} {searchMode} inSENTIMENT: {str(sentimentRequest)} \n"
+            f"\n{nMatches}  match(es).\n"
+            f"{str('_'*30)}"
+        )
 
     return rObject
 
