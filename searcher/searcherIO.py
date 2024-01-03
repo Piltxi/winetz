@@ -140,18 +140,21 @@ def resultFormatter (result):
         wine_type = typeName
         wine_name = result['wine_name']
         wine_year = result['wine_year']
+        wine_winery = result['wine_winery']
         wine_price = result['wine_price']
         review_note = result['review_note']
         sentiment = result['sentiment']
         score = result.score
 
         formatted_result = (
-            "\n"
+            # "\n"
+            #f"{'_'*40}\n"
             f"{i}] Score: {score:.2f}\n"
-            f"{wine_type}: \t"
+            f"{wine_type}: "
             f"{wine_name}\t"
             f"|{wine_year}|\t"
-            f"Price: {wine_price}\n"
+            f"Winery: {wine_winery}\t"
+            f"|{wine_price}€|\n"
             f"Note: {review_note}\n"
             f"Sentiment: {sentiment}\n"
             f"{'_'*40}\n"
@@ -189,37 +192,5 @@ def exportTXT (outPath, data):
         
     print (f"data exported in {outPath}.\n")
 
-if __name__ == '__main__':
-
-    ix = loadIndex (GUI=False)
-
-    searchField = ["wine_name", "style_description", "review_note", "wine_winery"]
-    priceInterval = [(None), (None)]
-    # wineType = ["1"]
-    sentimentRequest = (["M", "joy"])
-    algorithm = False
-    andFlag = False
-    thesaurusFlag = False
-    correctionFlag = False
-
-    priceInterval = None
-    wineType = ["1", "2"]
-    #sentimentRequest = (["M", "joy"])
-
-    sentimentRequest = None
-
-    year = None
-
-    parameters = searchField, priceInterval, wineType, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, year
-
-    while True: 
-        queryText = input ("type query> ")
-        
-        results = queryReply (ix, parameters, queryText)
-        printingResultsCLI (results[1])
-
-
-    results = queryReply (ix)
-    printingResultsCLI (results)
-
-
+if __name__ == "__main__":
+    raise ImportError("This is not an executable program: run searcher.py")
