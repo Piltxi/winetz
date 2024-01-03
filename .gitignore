@@ -16,6 +16,7 @@
 /searcher/in/*
 /index_backup/*
 /data/inputdev/*
+/data/archive/*
 /data/inputProd/*
 /searcher/static/in/*
 /searcher/__pycache__/
