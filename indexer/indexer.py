@@ -77,17 +77,16 @@ if __name__ == '__main__':
     classifiers = initClassifiers (args.offline)
 
     schema = Schema(
-        wine_type = NUMERIC(int, stored=True),
         style_description = TEXT(stored=True, analyzer=enAnlyzer),
+        
+        wine_type = NUMERIC(int, stored=True),
         wine_name = TEXT(stored=True, analyzer=itAnalyzer),
-        user_rating = NUMERIC(float, stored=True),
-        review_note = TEXT(stored=True, analyzer=itAnalyzer),
-        created_at = TEXT(stored=False),
         wine_winery = TEXT(stored=True, analyzer=itAnalyzer),
         wine_year = NUMERIC(int, stored=True),
-        wine_rating_count = NUMERIC(int, stored=False),
-        sentiment = TEXT(stored=True),
-        wine_price = NUMERIC(float, stored=True)
+        wine_price = NUMERIC(float, stored=True),
+        
+        review_note = TEXT(stored=True, analyzer=itAnalyzer),
+        sentiment = TEXT(stored=True)
     )
 
     ix = create_in(indexPath, schema)
@@ -105,17 +104,17 @@ if __name__ == '__main__':
                                 sentiment = setSentiment (review["Note"], review["Language"], classifiers)
                                 
                                 doc = {
-                                    "wine_type": str(wine_type["wine_Type"]),
+                                     
                                     "style_description": style["style_Description"],
+                                    
+                                    "wine_type": str(wine_type["wine_Type"]),
                                     "wine_name": wine["wine_Name"],
-                                    "user_rating": float(review["User_Rating"]),
-                                    "review_note": review["Note"],
-                                    "created_at": review["CreatedAt"],
+                                    "wine_price": wine["wine_Price"],
                                     "wine_winery": wine["wine_Winery"],
                                     "wine_year": wine["wine_Year"],
-                                    "wine_rating_count": wine["wine_Rates_count"],
+                                   
                                     "sentiment": sentiment,
-                                    "wine_price": wine["wine_Price"]
+                                    "review_note": review["Note"],
                                 }
                                 
                                 writer.add_document(**doc)
