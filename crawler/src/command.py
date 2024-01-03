@@ -1,11 +1,11 @@
 def development (): 
     params = {
 
-        "wine_type_ids[]": ["1"],
-        "country_codes[]":"it",
+        "wine_type_ids[]": ["1"], 
+        "country_codes[]":["it"],
 
-        "min_rating" : "1",
-        "price_range_max": "20",
+        "min_rating" : "4.2",
+        "price_range_max": "9",
 
         } 
     languageList = ["it"]
@@ -23,3 +23,6 @@ def production ():
     languageList = ["it"]
 
     return params, languageList
+
+if __name__ == "__main__":
+    raise ImportError("This is not an executable program: run searcher.py")
