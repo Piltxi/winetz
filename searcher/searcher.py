@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import Scale, Toplevel, ttk
 from tkinter import filedialog
 from tkinter import Tk, Frame, Label, Button, Entry, Checkbutton, scrolledtext, PhotoImage
-from tkinter import StringVar, IntVar, DoubleVar, BooleanVar
+from tkinter import StringVar, IntVar, BooleanVar
 from tkinter import messagebox
 
 from whoosh.index import open_dir
@@ -48,7 +48,11 @@ def loadGUI (ix):
 
     global lastResearch
 
-    def changeAlgorithm(selected_algorithm):
+    def changeAlgorithm (selected_algorithm):
+
+        """
+            during select a search algorithm, update the state of the buttons
+        """
 
         print(f"Selected algorithm: {selected_algorithm}")
 
@@ -62,6 +66,9 @@ def loadGUI (ix):
         
         """
             change info views in sentiment label on new choice event
+
+            idea: display emotions in queries
+        
         """
 
         entry_below_sentiment.delete(0, tk.END)
@@ -274,7 +281,23 @@ def loadGUI (ix):
             result_text.tag_configure("custom_tag", foreground="red", font=("Helvetica", 14, "bold"), justify='center')
             result_text.tag_add("custom_tag", "1.0", "end")
     
+    def resetAND (): 
 
+        """
+            when thesaurus searching is enabled
+            AND keyword search mode must be disabled
+        """
+
+        if thesaurusFlag.get():
+            if andFlag.get() == 1:
+                andFlag.set('False')
+                andButton.config(state=tk.DISABLED)
+            else: 
+                andButton.config(state=tk.DISABLED)
+        if not thesaurusFlag.get(): 
+                andFlag.set('False')
+                andButton.config(state=tk.NORMAL)
+        
     #* main window config
     root = tk.Tk()
     
@@ -359,7 +382,8 @@ def loadGUI (ix):
     combo.set("in: [All fields]")
 
     andFlag = BooleanVar(value=False)
-    Checkbutton(fieldBar, text="AND", variable=andFlag).grid(row=0, column=2, padx=10, pady=5, sticky="w")
+    andButton = Checkbutton(fieldBar, text="AND", variable=andFlag)
+    andButton.grid(row=0, column=2, padx=10, pady=5, sticky="w")
 
     #* BAR: Environment
     downBar = Frame(left_frame, width=180, height=185, bg="#d5833f", highlightthickness=0, bd=0)
@@ -376,7 +400,7 @@ def loadGUI (ix):
     environmentBar = Frame(left_frame, width=180, height=185, bg="#420705",highlightthickness=0, bd=0)
     environmentBar.grid(row=7, column=0, padx=5, pady=5, sticky="n")
     Checkbutton(environmentBar, text="Ac", variable=autoCorrectionFlag).grid(row=0, column=1, padx=10, pady=5, sticky="w")
-    Checkbutton(environmentBar, text="Th", variable=thesaurusFlag).grid(row=0, column=2, padx=10, pady=5, sticky="w")
+    Checkbutton(environmentBar, text="Th", variable=thesaurusFlag, command=resetAND).grid(row=0, column=2, padx=10, pady=5, sticky="w")
     Checkbutton(environmentBar, text="TF-IDF", variable=tfidfFlag, command=lambda: changeAlgorithm("TF-IDF"), indicatoron=False).grid(row=0, column=3, padx=10, pady=5, sticky="w")
     Checkbutton(environmentBar, text="BM25F", variable=bm25Flag, command=lambda: changeAlgorithm("BM25F"), indicatoron=False).grid(row=0, column=4, padx=10, pady=5, sticky="w")
     

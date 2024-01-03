@@ -53,7 +53,30 @@ def searchFromThesaurus (sentence):
 
     return synonyms
 
+def updateQuery (UImode, sentCorrected, sentNotCorrected): 
+
+    if UImode:
+        result = messagebox.askyesno("wineTz", f"Did you mean '{sentCorrected}' ?")
+        if result:
+            return sentCorrected
+        else:
+            return sentNotCorrected
+    else: 
+        choice = input (f"Did you mean {sentCorrected}? y/N")
+        
+        if choice == 'y':
+            return sentCorrected
+        else:
+            return sentNotCorrected
+
 def queryReply (ix, parameters, queryText): 
+
+    """
+        specialized and extended query parser to consider all available parameters
+    Returns:
+        rObject: formatted string object of users request
+        results: list of results of the corresponding query
+    """
 
     UIMode, searchField, priceInterval, wineTypes, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, year = parameters
     
@@ -74,11 +97,10 @@ def queryReply (ix, parameters, queryText):
     if correctionFlag: 
         corrected_query = searcher.correct_query(mainQuery, queryText) 
         if corrected_query.query != mainQuery:
-            queryInWork = [queryCopy, corrected_query.string, corrected_query.string]
-            mainQuery = parser.parse(corrected_query.string)
-            if UIMode:
-                messagebox.showinfo("wineTz", f"matches \"{corrected_query.string}\"")
-
+            updated = updateQuery (UIMode, corrected_query.string, queryText)
+            queryInWork = [queryCopy, updated, updated]
+            mainQuery = parser.parse(updated)
+    
     # Wordnet tool 
     if thesaurusFlag:
         synonyms = searchFromThesaurus (queryInWork[1])
@@ -138,17 +160,23 @@ def queryReply (ix, parameters, queryText):
         else:
             combined_filter = yearFilter
     
-    algoString = "ALGORITHM: BM25F\t"
-    if algorithm:
-        algoString = "ALGORITHM: TD-IDF\t"
+    results = searcher.search(mainQuery, filter = combined_filter, limit=None)
 
-    searchMode = "MODE: OR-Query\t"
-    if andFlag:
-        searchMode = "MODE: AND-Query\t"
+    '''
+        the following lines are useful to extend the search as much as possible.
+        the user's choice is always considered.
+    '''
 
-    results = searcher.search(mainQuery, filter = combined_filter, limit=1000)
-    
-    rObject = objectFormatter (queryInWork[0], queryInWork[1], queryInWork[2],mainQuery, combined_filter, searchField, searchMode, sentimentRequest, algoString, len(results))
+    if not correctionFlag:
+        if len(results) == 0:
+            choice = messagebox.askyesno("wineTz", "No matches found\nEnable tools for search extension?")
+            if choice:
+                mainQuery = parser.parse(queryText)
+                corrected_query = searcher.correct_query(mainQuery, queryText) 
+                if corrected_query.query != mainQuery:
+                    return queryReply(ix, parameters, corrected_query.string)
+
+    rObject = objectFormatter (queryInWork[0], queryInWork[1], queryInWork[2], mainQuery, combined_filter, searchField, andFlag, sentimentRequest, algorithm, len(results), correctionFlag, thesaurusFlag)
     
     if UIMode:
         print (rObject)
@@ -157,43 +185,52 @@ def queryReply (ix, parameters, queryText):
 
 def resultFormatter (result): 
         
-        number_mapping = {
-            "Red Wine": 1,
-            "White Wine": 2,
-            "Rosé": 3,
-            "Sparkling Wine": 4,
-            "Dessert Wine": 7,
-            "Fortified Wine": 24
-        }
+    """
+        useful for reading the request result in the most readable format
+    """
+    
+    number_mapping = {
+        "Red Wine": 1,
+        "White Wine": 2,
+        "Rosé": 3,
+        "Sparkling Wine": 4,
+        "Dessert Wine": 7,
+        "Fortified Wine": 24
+    }
 
-        reverse_mapping = {v: k for k, v in number_mapping.items()}
-        typeName = reverse_mapping.get(int(result['wine_type']), "ND type")
+    reverse_mapping = {v: k for k, v in number_mapping.items()}
+    typeName = reverse_mapping.get(int(result['wine_type']), "ND type")
 
-        i = result.rank + 1
+    i = result.rank + 1
 
-        wine_type = typeName
-        wine_name = result['wine_name']
-        wine_year = result['wine_year']
-        wine_winery = result['wine_winery']
-        wine_price = result['wine_price']
-        review_note = result['review_note']
-        sentiment = result['sentiment']
-        score = result.score
+    wine_type = typeName
+    wine_name = result['wine_name']
+    wine_year = result['wine_year']
+    wine_winery = result['wine_winery']
+    wine_price = result['wine_price']
+    review_note = result['review_note']
+    sentiment = result['sentiment']
+    score = result.score
 
-        formatted_result = (
-            f"{i}] Score: {score:.2f}\t| Sentiment Score: {sentiment} |\n"
-            f"{wine_type}: "
-            f"{wine_name}\t"
-            f"|{wine_year}|\t"
-            f"Winery: {wine_winery}\t"
-            f"|{wine_price}€|\n"
-            f"Note: {review_note}\n"
-            f"{'_'*40}\n"
-        )
+    formatted_result = (
+        f"{i}] Score: {score:.2f}\t| Sentiment Score: {sentiment} |\n"
+        f"{wine_type}: "
+        f"{wine_name}\t"
+        f"|{wine_year}|\t"
+        f"Winery: {wine_winery}\t"
+        f"|{wine_price}€|\n"
+        f"Note: {review_note}\n"
+        f"{'_'*40}\n"
+    )
 
-        return formatted_result
+    return formatted_result
 
 def printResultsCLI (rObject, results):
+
+    """
+        printing of results and formatted request object
+        useful when starting from CLI interface
+    """
 
     print (rObject)
     print ("\n")
@@ -204,7 +241,27 @@ def printResultsCLI (rObject, results):
 
     print (f"{'*'*40}\nend of results")
 
-def objectFormatter (inText, inQuery, finalText, mainQuery, combined_filter, searchField, searchMode, sentimentRequest, algoString, nMatches): 
+def objectFormatter (inText, inQuery, finalText, mainQuery, combined_filter, searchField, andFlag, sentimentRequest, algorithm, nMatches, correctionFlag, thesaurusFlag): 
+
+    """
+        useful for reading the request object in the most readable format
+    """
+
+    algoString = "ALGORITHM: BM25F\t"
+    if algorithm:
+        algoString = "ALGORITHM: TD-IDF\t"
+
+    searchMode = "MODE: OR-Query\t"
+    if andFlag:
+        searchMode = "MODE: AND-Query\t"
+
+    corrString = "correction tools: disabled\t"
+    if correctionFlag:
+        corrString = "correction tools: enabled\t"
+
+    thString = "thesaurus tools: disabled\n"
+    if thesaurusFlag:
+        thString = "thesaurus tools: enabled\n"
 
     rObject = (
         "\n______request object______\n"
@@ -214,6 +271,7 @@ def objectFormatter (inText, inQuery, finalText, mainQuery, combined_filter, sea
         f"FILTERS: {str(combined_filter)}\n"
         f"FIELD(s): {str(searchField)}\n"
         f"{algoString} {searchMode} inSENTIMENT: {str(sentimentRequest)} \n"
+        f"{corrString} {thString}"
         f"\n{nMatches}  match(es).\n"
         f"{str('_'*30)}"
     ) if inQuery != finalText else (
@@ -223,6 +281,7 @@ def objectFormatter (inText, inQuery, finalText, mainQuery, combined_filter, sea
             f"FILTERS: {str(combined_filter)}\n"
             f"FIELD(s): {str(searchField)}\n"
             f"{algoString} {searchMode} inSENTIMENT: {str(sentimentRequest)} \n"
+            f"{corrString} {thString}"
             f"\n{nMatches}  match(es).\n"
             f"{str('_'*30)}"
         )
