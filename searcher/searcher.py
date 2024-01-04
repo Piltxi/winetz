@@ -1,11 +1,8 @@
 import tkinter as tk
-from tkinter import Scale, Toplevel, ttk
+from tkinter import Toplevel, ttk
 from tkinter import filedialog
-from tkinter import Tk, Frame, Label, Button, Entry, Checkbutton, scrolledtext, PhotoImage
+from tkinter import Frame, Label, Button, Entry, Checkbutton, scrolledtext, PhotoImage
 from tkinter import StringVar, IntVar, BooleanVar
-from tkinter import messagebox
-
-from whoosh.index import open_dir
 
 from searcherIO import loadIndex, queryReply, resultFormatter, exportTXT
 
@@ -14,6 +11,17 @@ lastResearch = []
 
 def translateSentiment (sentimentRequest): 
     
+    """
+        method of correction and translation of sentiment analysis 
+        information entered into input parameters for the search function.
+
+        In the future, it can be extended with translation 
+        for other sentiment analysis models
+
+    Returns:
+        [translated_level, translated_emotion]: sentiment analysis parameters for feel it model
+    """
+
     corrispondence = {
         "Fear": "fear",
         "Angry": "angry",
@@ -168,17 +176,13 @@ def loadGUI (ix):
 
         inputPath = filedialog.askdirectory()
         
-        try:
-            ix = open_dir(inputPath)
-        except Exception as e:
-            print ("] Error in loading index from: ", inputPath)
-            messagebox.showerror('wineTz', 'The index was not loaded.')
-            quit()
+        ix = loadIndex(inputPath, True)
 
-        print ("Loaded new index from: ", inputPath)
-        print ("rebooting...")
-        root.destroy()
-        loadGUI(ix)
+        if ix != None:
+            print ("Loaded new index from: ", inputPath)
+            print ("rebooting...")
+            root.destroy()
+            loadGUI(ix)
 
     def cleanParam (): 
 
@@ -415,5 +419,5 @@ def loadGUI (ix):
 
 if __name__ == '__main__':
 
-    ix = loadIndex (GUI=True)
+    ix = loadIndex (GUI=True, rebooting=False)
     loadGUI(ix)
