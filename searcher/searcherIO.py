@@ -11,7 +11,35 @@ from tkinter import Tk, messagebox
 
 from textTools import searchFromThesaurus
 
-def loadIndex (GUI):
+def loadIndex (GUI, rebooting):
+
+    """
+        function to load the index; 
+        it is initialization;
+        can be used from both CLI and GUI
+
+    Returns:
+        ix: loaded index
+    """
+
+    if rebooting:
+
+        """
+            rebooting it's true when the caller is the GUI unit, 
+            to reload the index from a new path. 
+            
+            GUI input parameter indicates the path of the new index
+        """
+
+        try:
+            ix = open_dir(GUI)
+        except Exception as e:
+            print ("] Error in loading index from: ", GUI)
+            messagebox.showerror('wineTz', 'The index was not loaded.')
+            quit()
+
+        print ("Loaded new index from: ", GUI)
+        print ("rebooting...")
 
     if GUI:
         indexPath = "../index"
@@ -69,7 +97,6 @@ def queryReply (ix, parameters, queryText):
 
     UIMode, searchField, priceInterval, wineTypes, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, year = parameters
     
-
     #* parser parameters init
     scoreMethod = scoring.TF_IDF() if algorithm else scoring.BM25F()
     searcher = ix.searcher(weighting=scoreMethod)
