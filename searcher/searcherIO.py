@@ -5,10 +5,11 @@ from whoosh.qparser import MultifieldParser, AndGroup, OrGroup
 from whoosh.query import And, AndNot, Not, AndMaybe, Term, Or
 from whoosh.query import NumericRange
 from whoosh import scoring
-from nltk.corpus import wordnet
 
 import tkinter as tk
 from tkinter import Tk, messagebox
+
+from textTools import searchFromThesaurus
 
 def loadIndex (GUI):
 
@@ -41,18 +42,6 @@ def loadIndex (GUI):
     
     return ix
 
-def searchFromThesaurus (sentence): 
-    words = sentence.split()
-    synonyms = []
-
-    for word in words:
-        synonyms = [lemma.name() for syn in wordnet.synsets(word, lang='ita') for lemma in syn.lemmas('ita')]
-        synonyms.extend(synonyms)
-
-    synonyms = list(set(synonyms))
-
-    return synonyms
-
 def updateQuery (UImode, sentCorrected, sentNotCorrected): 
 
     if UImode:
@@ -80,6 +69,7 @@ def queryReply (ix, parameters, queryText):
 
     UIMode, searchField, priceInterval, wineTypes, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, year = parameters
     
+
     #* parser parameters init
     scoreMethod = scoring.TF_IDF() if algorithm else scoring.BM25F()
     searcher = ix.searcher(weighting=scoreMethod)
