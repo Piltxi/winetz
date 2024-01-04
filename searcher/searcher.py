@@ -228,7 +228,7 @@ def loadGUI (ix):
 
         query_string = queryText.get()
 
-        default = ["wine_name", "style_description", "review_note", "wine_winery"]
+        default = ["wine_name", "review_note", "wine_winery"]
         sentimentInQuery = translateSentiment (sentimentRequest)
         selected_numbers = [number_mapping[wine_type] for wine_type, var in zip(wine_types, wineTypes) if var.get() == 1]
 
@@ -368,14 +368,13 @@ def loadGUI (ix):
     fieldBar.grid(row=5, column=0, padx=5, pady=5, sticky="n")
     Label(fieldBar, text="Field", relief="raised").grid(row=0, column=0, padx=5, pady=5, sticky="w")
     
-    combo_options = ["in: [All fields]", "in: [Wine Name]", "in: [Winery]", "in: [Review]", "in: [Description]"]
-    default = ["wine_name", "style_description", "review_note", "wine_winery"]
+    combo_options = ["in: [All fields]", "in: [Wine Name]", "in: [Winery]", "in: [Review]"]
+    default = ["wine_name", "review_note", "wine_winery"]
     mappingFields = {
         "in: [All fields]" : default,
         "in: [Wine Name]" : "wine_name", 
         "in: [Winery]" : "wine_winery",
-        "in: [Review]" : "review_note",
-        "in: [Description]" : "style_description"
+        "in: [Review]" : "review_note"
     }
     combo = ttk.Combobox(fieldBar, values=combo_options)
     combo.grid(row=0, column=1, padx=10, pady=10)
