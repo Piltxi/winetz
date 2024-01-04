@@ -220,7 +220,7 @@ def resultFormatter (result):
         f"Winery: {wine_winery}\t"
         f"|{wine_price}€|\n"
         f"Note: {review_note}\n"
-        f"{'_'*40}\n"
+        f"{'_'*50}\n"
     )
 
     return formatted_result
@@ -234,7 +234,6 @@ def printResultsCLI (rObject, results):
 
     print (rObject)
     print ("\n")
-    print (f"{len(results)} match(es).\n")
 
     for result in results: 
         print (resultFormatter(result))
@@ -300,6 +299,43 @@ def exportTXT (outPath, data):
                 fo.write(resultFormatter(result))
         
     print (f"data exported in {outPath}.\n")
+
+def resultsCleaner (results):
+    
+    groups = {}
+    
+    for res in results:
+            wine_name = res.get("wine_name")
+            review_note = res.get("review_note")
+            sentiment = res.get("sentiment")
+            score = res.score  # Aggiungi questa linea per ottenere il punteggio
+
+            if wine_name and review_note:
+                if wine_name not in groups:
+                    groups[wine_name] = {"data": res, "reviews": [(review_note, score, sentiment)]}
+                else:
+                    groups[wine_name]["reviews"].append((review_note, score, sentiment))
+    
+    groupsInString = ""
+    for wine_name, group in groups.items():
+        data = group["data"]
+        reviews = group["reviews"]
+
+        groupsInString += f"\n\tWine: {wine_name}\n\n"
+        groupsInString += (
+            f"Wine Year: {data.get('wine_year')}\t"
+            f"Winery: {data.get('wine_winery')}\t"
+            f"Wine Price: {data.get('wine_price')}€\n\n"
+        )
+        
+        i = 1
+        for review, score, sentiment in reviews:
+            groupsInString += f"{i}] Score: {score:.2f} | Sentiment Score: {sentiment}\n{review}\n"
+            i += 1
+        
+        groupsInString += f"{'_'*100}\n"
+
+    return groupsInString
 
 if __name__ == "__main__":
     raise ImportError("This is not an executable program: run searcher.py")
