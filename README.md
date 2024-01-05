@@ -22,6 +22,8 @@ WineTz is a powerful tool that leverages sentiment analysis techniques to provid
 Whether you're a wine enthusiast, a sommelier, or a data-driven marketer, our engine helps you navigate the rich landscape of wine opinions.
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
+![Diagramma del Progetto](cropDiag.png)
+
 
 ### Prerequisites
 
