@@ -72,13 +72,11 @@ if __name__ == '__main__':
     '''
 
     itAnalyzer = LanguageAnalyzer('it', cachesize=-1)
-    enAnlyzer = LanguageAnalyzer ('en', cachesize=-1)
+    # enAnlyzer = LanguageAnalyzer ('en', cachesize=-1)
 
     classifiers = initClassifiers (args.offline)
 
     schema = Schema(
-        style_description = TEXT(stored=True, analyzer=enAnlyzer),
-        
         wine_type = NUMERIC(int, stored=True),
         wine_name = TEXT(stored=True, analyzer=itAnalyzer),
         wine_winery = TEXT(stored=True, analyzer=itAnalyzer),
@@ -104,8 +102,6 @@ if __name__ == '__main__':
                                 sentiment = setSentiment (review["Note"], review["Language"], classifiers)
                                 
                                 doc = {
-                                     
-                                    "style_description": style["style_Description"],
                                     
                                     "wine_type": str(wine_type["wine_Type"]),
                                     "wine_name": wine["wine_Name"],

@@ -5,12 +5,41 @@ from whoosh.qparser import MultifieldParser, AndGroup, OrGroup
 from whoosh.query import And, AndNot, Not, AndMaybe, Term, Or
 from whoosh.query import NumericRange
 from whoosh import scoring
-from nltk.corpus import wordnet
 
 import tkinter as tk
 from tkinter import Tk, messagebox
 
-def loadIndex (GUI):
+from textTools import searchFromThesaurus
+
+def loadIndex (GUI, rebooting):
+
+    """
+        function to load the index; 
+        it is initialization;
+        can be used from both CLI and GUI
+
+    Returns:
+        ix: loaded index
+    """
+
+    if rebooting:
+
+        """
+            rebooting it's true when the caller is the GUI unit, 
+            to reload the index from a new path. 
+            
+            GUI input parameter indicates the path of the new index
+        """
+
+        try:
+            ix = open_dir(GUI)
+        except Exception as e:
+            print ("] Error in loading index from: ", GUI)
+            messagebox.showerror('wineTz', 'The index was not loaded.')
+            quit()
+
+        print ("Loaded new index from: ", GUI)
+        print ("rebooting...")
 
     if GUI:
         indexPath = "../index"
@@ -40,18 +69,6 @@ def loadIndex (GUI):
     print (f"Number of items in loaded index: {ix.doc_count_all()}")
     
     return ix
-
-def searchFromThesaurus (sentence): 
-    words = sentence.split()
-    synonyms = []
-
-    for word in words:
-        synonyms = [lemma.name() for syn in wordnet.synsets(word, lang='ita') for lemma in syn.lemmas('ita')]
-        synonyms.extend(synonyms)
-
-    synonyms = list(set(synonyms))
-
-    return synonyms
 
 def updateQuery (UImode, sentCorrected, sentNotCorrected): 
 

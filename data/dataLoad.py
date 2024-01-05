@@ -217,6 +217,8 @@ def loadStructure (path, directory_name, currentTime):
     quit()'''
 
     reviews_df = reviews_df.drop_duplicates(subset=['Note', 'idWine'])
+    
+    # Currently the search engine only works with Italian reviews. In the future, comment out this line or edit it.
     reviews_df = reviews_df[reviews_df['Language'] != 'en']
 
     merged_df = pd.merge(reviews_df, wine_df, left_on='idWine', right_on='wine_ID', how='inner')
@@ -271,6 +273,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="WineTz v.1")
     parser.add_argument("-r", "--reset", action="store_true", help="reset directory dataset/")
     parser.add_argument("-f", "--file", action="store_true", help="specify output /path/")
+    parser.add_argument("-i", "--info", action="store_true", help="view info about exported dataframe")
     args = parser.parse_args()
 
     if args.reset:
@@ -286,4 +289,16 @@ if __name__ == '__main__':
         directory_name = input("Type path directory of the final dataset> ")
 
     dataframe = loadStructure(inputPath, directory_name, currentTime)
-    print ("Total size of dataset: ", dataframe.shape)
+    
+    if args.info:
+        print ("Total size of dataset: ", dataframe.shape)
+        
+        print ("wines x types:")
+        counts = dataframe['wine_Type'].value_counts()
+        print(counts)
+
+        print ("wines types x priceMin and priceMax:")
+        dataframe['wine_Type'] = dataframe['wine_Type'].astype(int)
+        dataframe['wine_Price'] = dataframe['wine_Price'].astype(float)
+        price_range = dataframe.groupby('wine_Type')['wine_Price'].agg(['min', 'max'])
+        print (price_range)
