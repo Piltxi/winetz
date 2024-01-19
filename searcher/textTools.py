@@ -13,15 +13,15 @@ def searchFromThesaurus (sentence):
     """
 
     words = sentence.split()
-    synonyms = []
+    allSynonyms = []
 
     for word in words:
         synonyms = [lemma.name() for syn in wordnet.synsets(word, lang='ita') for lemma in syn.lemmas('ita')]
-        synonyms.extend(synonyms)
+        allSynonyms.extend(synonyms)
 
-    synonyms = list(set(synonyms))
+    allSynonyms = list(set(allSynonyms))
 
-    return synonyms
+    return allSynonyms
 
 def langAnalysis (analyzers, sentence): 
 
