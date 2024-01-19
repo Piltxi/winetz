@@ -1,3 +1,36 @@
+"""
+FEEL-IT: Emotion and Sentiment Classification for the Italian Language
+
+Reference:
+@inproceedings{bianchi2021feel,
+    title = {{"FEEL-IT: Emotion and Sentiment Classification for the Italian Language"}},
+    author = "Bianchi, Federico and Nozza, Debora and Hovy, Dirk",
+    booktitle = "Proceedings of the 11th Workshop on Computational Approaches to Subjectivity, Sentiment and Social Media Analysis",
+    year = "2021",
+    publisher = "Association for Computational Linguistics",
+}
+"""
+
+"""
+Twitter-roBERTa-base for Sentiment Analysis - UPDATED (2022)
+@inproceedings{loureiro-etal-2022-timelms,
+    title = "{T}ime{LM}s: Diachronic Language Models from {T}witter",
+    author = "Loureiro, Daniel  and
+      Barbieri, Francesco  and
+      Neves, Leonardo  and
+      Espinosa Anke, Luis  and
+      Camacho-collados, Jose",
+    booktitle = "Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics: System Demonstrations",
+    month = may,
+    year = "2022",
+    address = "Dublin, Ireland",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2022.acl-demo.25",
+    doi = "10.18653/v1/2022.acl-demo.25",
+    pages = "251--260"
+}
+"""
+
 from transformers import TextClassificationPipeline, AutoModelForSequenceClassification, AutoTokenizer
 from transformers import pipeline
 
