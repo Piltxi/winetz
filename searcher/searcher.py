@@ -395,7 +395,7 @@ def loadGUI (ix):
     Button(downBar, text="refresh", width=5, highlightthickness=0, bd=0, command=cleanParam).grid(row=0, column=2, padx=10, pady=5, sticky="w")
     Button(downBar, text="index", width=5, highlightthickness=0, bd=0, command=loadIndexFromDialog).grid(row=0, column=3, padx=10, pady=5, sticky="w")
 
-    autoCorrectionFlag = BooleanVar(value=True)
+    autoCorrectionFlag = BooleanVar(value=False)
     thesaurusFlag = BooleanVar(value=False)
     tfidfFlag = BooleanVar(value=False)
     bm25Flag = BooleanVar(value=True)
@@ -410,7 +410,9 @@ def loadGUI (ix):
     #* Right Frame -> query and results
     queryText = Entry(right_frame, width=20)
     queryText.grid(row=0, column=0, padx=10, pady=5, sticky="e")
+    queryText.bind("<Return>", lambda event: searcherButton())
     Button(right_frame, text="Search", width=10, highlightthickness=0, bd=0, command=searcherButton).grid(row=0, column=1, padx=10, pady=5, sticky="w")
+    
     result_text = scrolledtext.ScrolledText(right_frame, wrap="word", width=50, height=20, font=("Helvetica", 12))
     result_text.grid(row=1, column=0, columnspan=2, padx=10, pady=5, sticky="n")
     result_text.bind("<Key>", disable_event)
