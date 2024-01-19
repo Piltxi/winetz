@@ -206,6 +206,7 @@ def loadGUI (ix):
         tfidfFlag.set(0)
         thesaurusFlag.set(0)
         autoCorrectionFlag.set(0)
+        andButton.config(state=tk.NORMAL)
 
         combo.set("in: [All fields]")
 
