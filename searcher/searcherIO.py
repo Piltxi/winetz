@@ -109,7 +109,7 @@ def queryReply (ix, parameters, queryText):
 
     #* TEXT in query
     # mainQuery = parser.parse(queryText)
-    if("*" in queryText):
+    if("*" in queryText) or (">" in queryText):
         mainQuery = parser.parse(queryText)
     else:
         mainQuery = parser.parse(" ".join([token.text for token in analyzer(queryText)]))
