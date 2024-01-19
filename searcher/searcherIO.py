@@ -332,7 +332,7 @@ def resultsCleaner (results):
             wine_name = res.get("wine_name")
             review_note = res.get("review_note")
             sentiment = res.get("sentiment")
-            score = res.score  # Aggiungi questa linea per ottenere il punteggio
+            score = res.score
 
             if wine_name and review_note:
                 if wine_name not in groups:
