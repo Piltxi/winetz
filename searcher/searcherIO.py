@@ -5,6 +5,7 @@ from whoosh.qparser import MultifieldParser, AndGroup, OrGroup
 from whoosh.query import And, AndNot, Not, AndMaybe, Term, Or
 from whoosh.query import NumericRange
 from whoosh import scoring
+from whoosh.analysis import SimpleAnalyzer
 
 import tkinter as tk
 from tkinter import Tk, messagebox
@@ -88,6 +89,8 @@ def updateQuery (UImode, sentCorrected, sentNotCorrected):
 
 def queryReply (ix, parameters, queryText): 
 
+    analyzer = SimpleAnalyzer()
+
     """
         specialized and extended query parser to consider all available parameters
     Returns:
@@ -105,8 +108,12 @@ def queryReply (ix, parameters, queryText):
     parser = MultifieldParser(searchField, schema=ix.schema, group=searchingMode)
 
     #* TEXT in query
-    mainQuery = parser.parse(queryText)
-    
+    # mainQuery = parser.parse(queryText)
+    if("*" in queryText):
+        mainQuery = parser.parse(queryText)
+    else:
+        mainQuery = parser.parse(" ".join([token.text for token in analyzer(queryText)]))
+
     queryCopy = queryText
     queryInWork = [queryCopy, queryCopy, queryCopy]
 
