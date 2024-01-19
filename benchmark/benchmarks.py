@@ -57,7 +57,7 @@ def applyRelevance (nlQuery, rObject, results):
 
     return relevance
 
-def getBenchmarks (allQuery): 
+def getBenchmarks (ix, allQuery): 
 
     allBenchmarks = []
 
@@ -75,7 +75,7 @@ def getBenchmarks (allQuery):
 
     return allBenchmarks
 
-def setBenchmarksQueries(ix): 
+def setBenchmarksQueries(): 
 
     allQuery = []
 
@@ -147,8 +147,8 @@ if __name__ == '__main__':
 
     ix = loadIndex(GUI=False, rebooting=False)
     
-    allQuery = setBenchmarksQueries (ix)
-    allBenchmarks = getBenchmarks(allQuery)
-    with open('benchmarks_data5.json', 'w') as json_file:
+    allQuery = setBenchmarksQueries ()
+    allBenchmarks = getBenchmarks(ix, allQuery)
+    
+    with open('benchmarks_data25.json', 'w') as json_file:
          json.dump(allBenchmarks, json_file, indent=2)
-
