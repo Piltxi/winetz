@@ -9,6 +9,7 @@
 ## 📝 Table of Contents
 
 - [About](#about)
+- [Prerequisites](#prerequisites)
 - [Usage](#usage)
 - [About the code](#Code)
 - [Built Using](#built_using)
@@ -22,9 +23,30 @@ Whether you're a wine enthusiast, a sommelier, or a data-driven marketer, our en
 
 <!-- ![Repo Diagram](crop2.png) -->
 
+## 🌂 Prerequisites <a name = "prerequisites"></a> 
+
+All requirements are described in `requiriments.txt`
+- Python 3.11.1 
+- nltk 3.8.1
+- pandas 2.1.4
+- Requests 2.31.0
+- tqdm 4.66.1
+- transformers 4.34.1
+- Whoosh 2.7.4
+- langdetect 1.0.9
+```
+pip3 install <module>
+```
+
+
 ## 🎈 Usage <a name="usage"></a>
 
+In this section: general overview of wineTz, main tools implemented.
+
 ### ⚖️ Start crawling
+
+`crawler/crawler.py`
+
 When WineTz starts its tasks, it prints the number of matches obtained through requests to the *vivino.com* API.
 Afterwards, you will see a progress bar describing the progress of the review retrieval.
 
@@ -36,7 +58,21 @@ Inside the *dataset directory*, WineTz exports three *.csv* files: wines, style 
 Automatically, a fourth *.json* file is created: *parameters.json*.<br>
 This file contains the parameters used for scraping. By copying this file to the *crawler/input/*, you can scrape with the same search parameters.
 
-[Detailed information](crawler/README.md)
+[detailed information about _web crawler_](crawler/README.md)
+
+### 📏 Indexer
+
+`indexer/indexer.py`
+
+After downloading the data, wineTz has a suite to index the data, and calculate sentiment analysis measures. <br> <br>
+It's possible to download analysis models, and change the relative paths in the `sentimentAnalysis.py` module. An index folder will be created inside the main project directory.
+
+### 🔭 Searcher
+
+`searcher/searcher.py`
+
+wineTz has a graphical interface to propose queries and perform searches. <br> <br> 
+Various functions are implemented within the GUI, including: search filters, complex natural language queries, search expansions using thesaurus and proofing tools.
 
 ## 🚀 About the code <a name = "Code"></a>
 
@@ -93,7 +129,7 @@ This file contains the parameters used for scraping. By copying this file to the
      ```bash
      python3 /benchmark/benchmarks.py
      ```
-    - Currently, some queries are already described. To change them, please be careful when entering the parameters.
+    - Currently, some queries are already described. To change them, be careful when entering the parameters.
 
 
 Note: <br>
@@ -101,14 +137,8 @@ Currently, the textual procedures are activated, tested and working exclusively 
 In the modules, the code is prepared for easy loading of other templates for other languages.
 
 ## ⛏️ Built Using <a name = "built_using"></a>
-Python technologies and libraries:
+Technologies and libraries:
 - Python 3.11.1 
-- nltk 3.8.1
-- pandas 2.1.4
-- Requests 2.31.0
-- tqdm 4.66.1
-- transformers 4.34.1
-- Whoosh 2.7.4
 
 Sentiment Analysis Models:
     
