@@ -48,7 +48,7 @@ def applyRelevance (nlQuery, rObject, results):
 
     print (nlQuery, "\n", rObject)
 
-    resultMod = results [:100] if len(results) > 100 else results
+    resultMod = results [:10] if len(results) > 10 else results
 
     relevance = []
     for result in resultMod: 
