@@ -130,21 +130,6 @@ def exportResults (allBenchmarks, name):
         except subprocess.CalledProcessError as e:
             print(f"Error in creating the directory: {e}")
 
-    # export measurements obtained with corrispondent queries [.txt]
-    fileName = "benchResults/output" + name + ".txt"
-    with open(fileName, 'w') as output_file:
-        for benchmark in allBenchmarks:
-            nlQuery, relevance, DCG_banch, NDCG_banch = benchmark
-
-            output_file.write(f"Query: {nlQuery}\n")
-            output_file.write("Relevance:\n")
-            for rel in relevance:
-                result, rel_score = rel
-                output_file.write(f"  {result['review_note']}: {rel_score}\n")
-
-            output_file.write(f"DCG values for first 10 documents retrieved: {DCG_banch}\n")
-            output_file.write(f"Normalized DCG for 10 retrieved documents: {NDCG_banch}\n\n")
-
     # export measurements obtained with corrispondent queries [.json]
     fileName = "benchResults/output" + name + ".json"
     with open(fileName, 'w', encoding='utf-8') as json_file:
@@ -161,17 +146,32 @@ def exportResults (allBenchmarks, name):
             json.dump(benchmark_data, json_file, indent=2)
             json_file.write('\n')
 
+    # export measurements obtained with corrispondent queries [.txt]
+    fileName = "benchResults/output" + name + ".txt"
+    with open(fileName, 'w') as output_file:
+        for benchmark in allBenchmarks:
+            nlQuery, relevance, DCG_banch, NDCG_banch = benchmark
+
+            output_file.write(f"Query: {nlQuery}\n")
+            output_file.write("Relevance:\n")
+            for rel in relevance:
+                result, rel_score = rel
+                output_file.write(f"  {result['review_note']}: {rel_score}\n")
+
+            output_file.write(f"DCG values for first 10 documents retrieved: {DCG_banch}\n")
+            output_file.write(f"Normalized DCG for 10 retrieved documents: {NDCG_banch}\n\n")
+
 if __name__ == '__main__':
 
     ix = loadIndex(GUI=False, rebooting=False)
     
-    # allQuery = setBenchmarksQueries_BM25F ()
-    # allBenchmarks = getBenchmarks(ix, allQuery)
-    # exportResults (allBenchmarks, "BM25F")
-
-    allQuery = setBenchmarksQueries_TDIDF ()
+    allQuery = setBenchmarksQueries_BM25F ()
     allBenchmarks = getBenchmarks(ix, allQuery)
-    exportResults (allBenchmarks, "TDIDF")
+    exportResults (allBenchmarks, "BM25F")
+
+    # allQuery = setBenchmarksQueries_TDIDF ()
+    # allBenchmarks = getBenchmarks(ix, allQuery)
+    # exportResults (allBenchmarks, "TDIDF")
 
     #! set :100 in _resultMod = results [:10] if len(results) > 10 else results_ [LINE 84]
     # allQuery = setBenchmarksQueries_bistecca ()
