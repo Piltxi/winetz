@@ -1,6 +1,10 @@
 import json
 import math
+import os
+import subprocess
 import sys
+
+from query import setBenchmarksQueriesBM25F
 
 sys.path.append('../searcher')
 from searcherIO import loadIndex, queryReply, resultFormatter
@@ -77,25 +81,27 @@ def applyRelevance (nlQuery, rObject, results):
 
     print (nlQuery, "\n", rObject)
 
-    resultMod = results [:10] if len(results) > 10 else results
+    resultMod = results [:1] if len(results) > 10 else results
 
     relevance = []
     for result in resultMod: 
         print (resultFormatter(result))
-        relevance.append(int(input("Insert relevance about this result: ")))
+        relValue = int(input("Insert relevance about this result: "))
+        relevance.append((result, relValue))
 
     return relevance
 
-def getBenchmarks (ix, allQuery): 
+def getBenchmarks(ix, allQuery): 
+    
+    """
+    getBenchmarks works with queries list 
+    - getBenchmarks show results for every query and it allows the user to set related relevance
 
-    """ getBenchmarks works with queries list 
-        - getBenchmarks show results for every query and it allows user to set related relevance
-
-        ix: index data object loaded
-        allQuery: list with queries [defined in setBenchmarksQueries()]
+    ix: index data object loaded
+    allQuery: list with queries [defined in setBenchmarksQueries()]
 
     Returns:
-        allBenchmarks: list with all queries and related relevance, DCG and NDCG of obteined results
+        allBenchmarks: list with all queries and related relevance, DCG, and NDCG of obtained results
     """
 
     allBenchmarks = []
@@ -104,106 +110,61 @@ def getBenchmarks (ix, allQuery):
         
         nlQuery, queryText, parameters = query
         rObject, results = queryReply(ix, parameters, queryText)
-        relevance = applyRelevance (nlQuery, rObject, results)
+        relevance = applyRelevance(nlQuery, rObject, results)
 
-        DCG_banch = dcg(relevance)
-        NDCG_banch = ndcg(relevance)
+        DCG_banch = dcg([rel[1] for rel in relevance])
+        NDCG_banch = ndcg([rel[1] for rel in relevance])
 
-        allBenchmarks.append ([nlQuery, relevance, DCG_banch, NDCG_banch])
+        allBenchmarks.append([nlQuery, relevance, DCG_banch, NDCG_banch])
 
-        print("DCG values for first 10 document retrieved:\n", DCG_banch)
+        print("DCG values for first 10 documents retrieved:\n", DCG_banch)
         print("Normalized DCG for 10 retrieved documents:\n", NDCG_banch)
 
     return allBenchmarks
 
-def setBenchmarksQueries(): 
+def exportResults (allBenchmarks, name): 
 
-    '''
-        definition query list and related search filters
-        
-        Returns:
-            allQuery: list with loaded queries
-    '''
+    if not os.path.exists("benchResults/"):
+        try:
+            os.makedirs("benchResults/")
+        except subprocess.CalledProcessError as e:
+            print(f"Error in creating the directory: {e}")
 
-    allQuery = []
+    # export measurements obtained with corrispondent queries [.txt]
+    fileName = "benchResults/output" + name + ".txt"
+    with open(fileName, 'w') as output_file:
+        for benchmark in allBenchmarks:
+            nlQuery, relevance, DCG_banch, NDCG_banch = benchmark
 
-    nlQuery = "Query n1: 'Vino Valpolicella'"
-    queryText = "Valpolicella"
-    parameters = [False, ["wine_name"], None, ["1"], (None), False, False, False, False, None]
-    allQuery.append([nlQuery, queryText, parameters])
+            output_file.write(f"Query: {nlQuery}\n")
+            output_file.write("Relevance:\n")
+            for rel in relevance:
+                result, rel_score = rel
+                output_file.write(f"  {result['review_note']}: {rel_score}\n")
 
-    nlQuery = "Query n1: 'Vino Valpolicella'"
-    queryText = "Valpolicella"
-    parameters = [False, ["wine_name"], None, ["1"], (None), True, False, False, False, None]
-    allQuery.append([nlQuery, queryText, parameters])
-    
-    nlQuery = "Query n2: 'Vini cantina Valdo'"
-    queryText = "Valdo"
-    parameters = [False, ["wine_winery"], None, None, (None), False, False, False, False, None]
-    allQuery.append([nlQuery, queryText, parameters])
+            output_file.write(f"DCG values for first 10 documents retrieved: {DCG_banch}\n")
+            output_file.write(f"Normalized DCG for 10 retrieved documents: {NDCG_banch}\n\n")
 
-    nlQuery = "Query n3: 'Vino Montepulciano, impressione positiva, Prezzo compreso tra 10 e 20€'"
-    queryText = "Montepulciano"
-    parameters = [False, ["wine_name"], [(10), (20)], ["1"], (["M", "joy"]), False, False, False, False, None]
-    allQuery.append([nlQuery, queryText, parameters])
+    # export measurements obtained with corrispondent queries [.json]
+    fileName = "benchResults/output" + name + ".json"
+    with open(fileName, 'w', encoding='utf-8') as json_file:
+        for benchmark in allBenchmarks:
+            nlQuery, relevance, DCG_banch, NDCG_banch = benchmark
 
-    nlQuery = "Query n4: 'Vini bianchi adatti sia per la carne che per il pesce, recensioni positive, Prezzo compreso tra 20 e 30€'"
-    queryText = "carne e pesce"
-    parameters = [False, ["review_note"], [(20), (30)], ["1", "2"], (["M", "joy"]), False, False, True, False, None]
-    allQuery.append([nlQuery, queryText, parameters])
+            benchmark_data = {
+                'Query': nlQuery,
+                'Relevance': [{'result': result['review_note'], 'score': rel_score} for result, rel_score in relevance],
+                'DCG_values': DCG_banch,
+                'Normalized_DCG': NDCG_banch
+            }
 
-    nlQuery = "Query n5: 'Vini da abbinare a bistecche [con e senza thesaurus]'"
-    queryText = "bistecca"
-    parameters = [False, ["review_note"], None, None, (["M", "joy"]), False, False, False, False, None]
-    allQuery.append([nlQuery, queryText, parameters])
-
-    queryText = "bistecca"
-    parameters = [False, ["review_note"], None, None, (["M", "joy"]), False, True, False, False, None]
-    allQuery.append([nlQuery, queryText, parameters])
-
-    nlQuery = "Query n6: ' Vini economici ma con recensioni tristi'"
-    queryText = "economico"
-    parameters = [False, ["review_note"], None, None, (["M", "sadness"]), False, False, False, False, None]
-    allQuery.append([nlQuery, queryText, parameters])
-
-    nlQuery = "Query n7: 'Vini per festeggiare, sotto i 20€'"
-    queryText = "festa"
-    parameters = [False, ["review_note"], [(None), (20)], None, (["M", "joy"]), False, False, False, False, None]
-    allQuery.append([nlQuery, queryText, parameters])
-
-    queryText = "festa"
-    parameters = [False, ["review_note"], [(None), (20)], None, (["M", "joy"]), False, True, False, False, None]
-    allQuery.append([nlQuery, queryText, parameters])
-
-    nlQuery = "Query n8: 'Vini di grande personalità del 2012'"
-    queryText = "grande personalità"
-    parameters = [False, ["review_note"], None, None, (["M", "joy"]), False, False, True, False, 2012]
-    allQuery.append([nlQuery, queryText, parameters])
-
-    nlQuery = "Query n9: 'Vini Liquorosi con sentori di miele, recensioni positive'"
-    queryText = "miele"
-    parameters = [False, ["review_note"], None, ["24"], None, False, False, True, False, None]
-    allQuery.append([nlQuery, queryText, parameters])
-
-    nlQuery = "Query n10: 'Lambrusco con gnocco fritto'"
-    queryText = "lambrusco e gnocco fritto"
-    parameters = [False, ["wine_name", "review_note"], None, None, None, False, False, True, False, None]
-    allQuery.append([nlQuery, queryText, parameters])
-
-    queryText = " > wine_name:lambrusc AND review_note:gnocc AND review_note:fritt"
-    parameters = [False, ["wine_name", "review_note"], None, None, None, False, False, True, False, None]
-    allQuery.append([nlQuery, queryText, parameters])
-
-    return allQuery
+            json.dump(benchmark_data, json_file, indent=2)
+            json_file.write('\n')
 
 if __name__ == '__main__':
 
     ix = loadIndex(GUI=False, rebooting=False)
     
-    allQuery = setBenchmarksQueries ()
-    
+    allQuery = setBenchmarksQueriesBM25F ()
     allBenchmarks = getBenchmarks(ix, allQuery)
-    
-    # export measurements obtained with corrispondent queries
-    with open('benchmarks.json', 'w') as json_file:
-        json.dump(allBenchmarks, json_file, indent=2)
+    exportResults (allBenchmarks, "BM25F")
