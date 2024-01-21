@@ -4,7 +4,7 @@ import os
 import subprocess
 import sys
 
-from query import setBenchmarksQueriesBM25F
+from query import *
 
 sys.path.append('../searcher')
 from searcherIO import loadIndex, queryReply, resultFormatter
@@ -81,7 +81,7 @@ def applyRelevance (nlQuery, rObject, results):
 
     print (nlQuery, "\n", rObject)
 
-    resultMod = results [:1] if len(results) > 10 else results
+    resultMod = results [:1] if len(results) > 1 else results
 
     relevance = []
     for result in resultMod: 
@@ -165,6 +165,20 @@ if __name__ == '__main__':
 
     ix = loadIndex(GUI=False, rebooting=False)
     
-    allQuery = setBenchmarksQueriesBM25F ()
+    allQuery = setBenchmarksQueries_BM25F ()
     allBenchmarks = getBenchmarks(ix, allQuery)
     exportResults (allBenchmarks, "BM25F")
+
+    # allQuery = setBenchmarksQueries_TDIDF ()
+    # allBenchmarks = getBenchmarks(ix, allQuery)
+    # exportResults (allBenchmarks, "TDIDF")
+
+    # allQuery = setBenchmarksQueries_bistecca ()
+    # allBenchmarks = getBenchmarks(ix, allQuery)
+    # exportResults (allBenchmarks, "bistecca")
+
+    # allQuery = setBenchmarksQueries_festa ()
+    # allBenchmarks = getBenchmarks(ix, allQuery)
+    # exportResults (allBenchmarks, "festa")
+
+    print (f"\n\n{'_'*50}\nEND: saved with success\n\n")
