@@ -2,7 +2,13 @@
 
 <div align="center">
 
-[![Work in Progress](https://img.shields.io/badge/status-work_in_progress-yellow.svg)](https://shields.io/)
+![Language](https://img.shields.io/badge/language-Python-orange.svg)
+[![Work in Progress](https://img.shields.io/badge/build-passing-grass.svg)](https://shields.io/)
+![Project Type](https://img.shields.io/badge/project-university-blue.svg)
+![Mateined](https://img.shields.io/badge/Maintained%3F-yes-green.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+
+
 
 </div>
 
