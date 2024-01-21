@@ -8,8 +8,6 @@
 ![Mateined](https://img.shields.io/badge/Maintained%3F-yes-green.svg)
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 
-
-
 </div>
 
 ## 📝 Table of Contents

@@ -24,3 +24,5 @@
 /searcher/__pycache__/
 /benchmark/bench archive
 /benchmark/queries.txt
+/benchmark/benchResults
+/benchmark/__pycache__/
