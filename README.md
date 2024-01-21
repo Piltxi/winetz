@@ -9,8 +9,6 @@
 ## 📝 Table of Contents
 
 - [About](#about)
-- [Getting Started](#getting_started)
-- [Deployment](#deployment)
 - [Usage](#usage)
 - [About the code](#Code)
 - [Built Using](#built_using)
@@ -22,11 +20,7 @@ WineTz is a powerful tool that leverages sentiment analysis techniques to provid
 <br><br>
 Whether you're a wine enthusiast, a sommelier, or a data-driven marketer, our engine helps you navigate the rich landscape of wine opinions.
 
-## 🏁 Getting Started <a name = "getting_started"></a>
-<!-- ![Diagramma del Progetto](crop2.png) -->
-
-
-### Prerequisites
+<!-- ![Repo Diagram](crop2.png) -->
 
 ## 🎈 Usage <a name="usage"></a>
 
@@ -42,9 +36,7 @@ Inside the *dataset directory*, WineTz exports three *.csv* files: wines, style 
 Automatically, a fourth *.json* file is created: *parameters.json*.<br>
 This file contains the parameters used for scraping. By copying this file to the *crawler/input/*, you can scrape with the same search parameters.
 
-[For detailed information:](#crawling)
-
-## 🚀 Deployment <a name = "deployment"></a>
+[Detailed information](crawler/README.md)
 
 ## 🚀 About the code <a name = "Code"></a>
 
