@@ -7,6 +7,7 @@ from tqdm import tqdm
 from whoosh.fields import *
 from whoosh.index import create_in
 from whoosh.analysis import LanguageAnalyzer
+from whoosh.analysis import NgramAnalyzer
 
 from sentimentAnalyis import setSentiment, initClassifiers
 
@@ -42,7 +43,8 @@ def loadJSON (inputPath):
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description="WineTz - Indexer v.1")
-    parser.add_argument("-r", "--reset", action="store_true", help="reset directory dataset/")
+    parser.add_argument("-r", "--reset", action="store_true", help="reset directory index/")
+    parser.add_argument("-q", "--qgram", action="store_true", help="set q-grams analyzer")
     parser.add_argument("-o", "--offline", action="store_true", help="load offline models")
     args = parser.parse_args()
 
@@ -73,6 +75,9 @@ if __name__ == '__main__':
 
     itAnalyzer = LanguageAnalyzer('it', cachesize=-1)
     # enAnlyzer = LanguageAnalyzer ('en', cachesize=-1)
+
+    if args.qgram:
+        itAnalyzer = NgramAnalyzer(3)
 
     classifiers = initClassifiers (args.offline)
 
