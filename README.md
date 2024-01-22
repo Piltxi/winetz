@@ -111,11 +111,16 @@ Various functions are implemented within the GUI, including: search filters, com
      ```bash
      python3 /indexer/indexer.py
      ```
-   - The script accepts a parameter using the `argsparse` library:
+   - The script accepts parameters using the `argsparse` library:
+     ```bash
+     python3 /indexer/indexer.py -q
+     ```
+     this parameter is used to index data via qgrams.
+   - The script accepts 
      ```bash
      python3 /indexer/indexer.py -o
      ```
-     This parameter was used to employ `indexer.py` with offline sentiment analysis models.
+     This parameter is used to employ `indexer.py` with offline sentiment analysis models.
 
 4. **Navigate indexed data via graphical interface**
    - The `/searcher/searcher.py` loads GUI with function to navigate into items indexed collection:
