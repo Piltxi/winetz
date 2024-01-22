@@ -175,22 +175,22 @@ if __name__ == '__main__':
 
     ix = loadIndex(GUI=False, rebooting=False)
     
-    # allQuery = setBenchmarksQueries_BM25F ()
-    # allBenchmarks = getBenchmarks(ix, allQuery)
-    # exportResults (allBenchmarks, "BM25F")
+    allQuery = setBenchmarksQueries_BM25F ()
+    allBenchmarks = getBenchmarks(ix, allQuery)
+    exportResults (allBenchmarks, "BM25F")
 
     allQuery = setBenchmarksQueries_TDIDF ()
     allBenchmarks = getBenchmarks(ix, allQuery)
     exportResults (allBenchmarks, "TDIDF")
 
     #! set :100 in _resultMod = results [:10] if len(results) > 10 else results_ [LINE 84]
-    # allQuery = setBenchmarksQueries_bistecca ()
-    # allBenchmarks = getBenchmarks(ix, allQuery)
-    # exportResults (allBenchmarks, "bistecca")
+    allQuery = setBenchmarksQueries_bistecca ()
+    allBenchmarks = getBenchmarks(ix, allQuery)
+    exportResults (allBenchmarks, "bistecca")
 
     #! set :100 in _resultMod = results [:10] if len(results) > 10 else results_ [LINE 84]
-    # allQuery = setBenchmarksQueries_festa ()
-    # allBenchmarks = getBenchmarks(ix, allQuery)
-    # exportResults (allBenchmarks, "festa")
+    allQuery = setBenchmarksQueries_festa ()
+    allBenchmarks = getBenchmarks(ix, allQuery)
+    exportResults (allBenchmarks, "festa")
 
     print (f"\n\n{'_'*50}\nEND: saved with success\n\n")
