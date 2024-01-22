@@ -86,7 +86,17 @@ def applyRelevance (nlQuery, rObject, results):
     relevance = []
     for result in resultMod: 
         print (resultFormatter(result))
-        relValue = int(input("Insert relevance about this result: "))
+
+        while True:
+            try:
+                relValue = int(input("Insert relevance about this result (0-3): "))
+                if 0 <= relValue <= 3:
+                    break
+                else:
+                    print("Invalid input. Please enter a value between 0 and 3 (inclusive).")
+            except ValueError:
+                print("Invalid input. Please enter a valid integer.")
+
         relevance.append((result, relValue))
 
     return relevance
@@ -165,13 +175,13 @@ if __name__ == '__main__':
 
     ix = loadIndex(GUI=False, rebooting=False)
     
-    allQuery = setBenchmarksQueries_BM25F ()
-    allBenchmarks = getBenchmarks(ix, allQuery)
-    exportResults (allBenchmarks, "BM25F")
-
-    # allQuery = setBenchmarksQueries_TDIDF ()
+    # allQuery = setBenchmarksQueries_BM25F ()
     # allBenchmarks = getBenchmarks(ix, allQuery)
-    # exportResults (allBenchmarks, "TDIDF")
+    # exportResults (allBenchmarks, "BM25F")
+
+    allQuery = setBenchmarksQueries_TDIDF ()
+    allBenchmarks = getBenchmarks(ix, allQuery)
+    exportResults (allBenchmarks, "TDIDF")
 
     #! set :100 in _resultMod = results [:10] if len(results) > 10 else results_ [LINE 84]
     # allQuery = setBenchmarksQueries_bistecca ()
