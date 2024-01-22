@@ -80,7 +80,7 @@ Various functions are implemented within the GUI, including: search filters, com
 
 ## 🚀 About the code <a name = "Code"></a>
 
-![Diagramma del Progetto](crop2.png)
+![Repo Diagram](projectDiagram.png)
 
 ### The contents of the folders in more detail:
 
