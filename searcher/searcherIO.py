@@ -155,7 +155,7 @@ def queryReply (ix, parameters, queryText):
                 mainQuery = And([Term("sentiment", sentimentRequest[1]), mainQuery])
             
             case "m":
-                mainQuery = AndMaybe([Term("sentiment", sentimentRequest[1]), mainQuery])
+                mainQuery = AndMaybe(Term("sentiment", sentimentRequest[1]), mainQuery)
 
             case _:
                 print ("\n\n] error detected: sentiment score attribution in query exploration.\n\n")
