@@ -5,6 +5,7 @@ from tkinter import Frame, Label, Button, Entry, Checkbutton, scrolledtext, Phot
 from tkinter import StringVar, IntVar, BooleanVar
 
 from searcherIO import loadIndex, queryReply, resultFormatter, exportTXT
+# from searcherIO import queryReply_scoringMod
 
 sentimentRequest = {'emotion': None, 'level': None}
 lastResearch = []
@@ -268,6 +269,7 @@ def loadGUI (ix):
         UIMode = True
         parameters = UIMode, searchField, priceInterval, selected_numbers, sentimentInQuery, algorithm, thesaurusFlag.get(), andFlag.get(), autoCorrectionFlag.get(), yearV
         question, results = queryReply (ix, parameters, query_string)
+        # question, results = queryReply_scoringMod (ix, parameters, query_string)
 
         global lastResearch 
         lastResearch = [question, results]

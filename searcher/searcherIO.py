@@ -89,14 +89,14 @@ def updateQuery (UImode, sentCorrected, sentNotCorrected):
 
 def queryReply (ix, parameters, queryText): 
 
-    analyzer = SimpleAnalyzer()
-
     """
         specialized and extended query parser to consider all available parameters
     Returns:
         rObject: formatted string object of users request
         results: list of results of the corresponding query
     """
+
+    analyzer = SimpleAnalyzer()
 
     UIMode, searchField, priceInterval, wineTypes, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, year = parameters
     
@@ -361,5 +361,144 @@ def resultsCleaner (results):
 
     return groupsInString
 
+def queryReply_scoringMod (ix, parameters, queryText): 
+
+    """
+        specialized and extended query parser to consider all available parameters
+
+        ---
+        Alternative ranking function, based on 
+        changing the score assigned during the indexing process
+
+    Returns:
+        rObject: formatted string object of users request
+        results: list of results of the corresponding query
+    """
+
+    analyzer = SimpleAnalyzer()
+    UIMode, searchField, priceInterval, wineTypes, sentimentRequest, algorithm, thesaurusFlag, andFlag, correctionFlag, year = parameters
+    
+    #* parser parameters init
+    scoreMethod = scoring.TF_IDF() if algorithm else scoring.BM25F()
+    searcher = ix.searcher(weighting=scoreMethod)
+
+    searchingMode = AndGroup if andFlag else OrGroup
+    parser = MultifieldParser(searchField, schema=ix.schema, group=searchingMode)
+
+    #* TEXT in query
+    # mainQuery = parser.parse(queryText)
+    if("*" in queryText) or (">" in queryText):
+        mainQuery = parser.parse(queryText)
+    else:
+        mainQuery = parser.parse(" ".join([token.text for token in analyzer(queryText)]))
+
+    queryCopy = queryText
+    queryInWork = [queryCopy, queryCopy, queryCopy]
+
+    # Whoosh correction tool 
+    if correctionFlag: 
+        corrected_query = searcher.correct_query(mainQuery, queryText) 
+        if corrected_query.query != mainQuery:
+            updated = updateQuery (UIMode, corrected_query.string, queryText)
+            queryInWork = [queryCopy, updated, updated]
+            mainQuery = parser.parse(updated)
+    
+    # Wordnet tool 
+    if thesaurusFlag:
+        synonyms = searchFromThesaurus (queryInWork[1])
+        stringResearch = f"{' '.join(synonyms)}" if synonyms else queryInWork[1]
+        if stringResearch != queryInWork[1]:
+            queryInWork = [queryCopy, queryInWork[1], stringResearch]
+            mainQuery = parser.parse(stringResearch)
+            print ("with thesaurus extension: ", stringResearch)
+            if UIMode:
+                    messagebox.showinfo("wineTz", f"matches \"{stringResearch}\"")
+
+    #* PRICE in query
+    if priceInterval != None:
+        minPrice, maxPrice = priceInterval
+        priceQuery = NumericRange("wine_price", minPrice, maxPrice, startexcl=True, endexcl=True)
+        mainQuery = And([mainQuery, priceQuery])
+    
+    combined_filter = None
+    
+    #* TYPE in query
+    wineFilters = None
+    if wineTypes:
+        filter_conditions = [Term("wine_type", wt) for wt in wineTypes]
+        wineFilters = Or(filter_conditions)
+
+        if combined_filter:
+            combined_filter = And ([combined_filter, wineFilters])
+        else:
+            combined_filter = wineFilters
+
+    #* YEAR in query
+    yearFilter = None
+    if year: 
+        yearFilter = Term ("wine_year", year)
+
+        if combined_filter:
+            combined_filter = And ([combined_filter, yearFilter])
+        else:
+            combined_filter = yearFilter
+    
+    results = searcher.search(mainQuery, filter = combined_filter, limit=None)
+
+    '''
+        the following lines are useful to extend the search as much as possible.
+        the user's choice is always considered.
+    '''
+
+    if not correctionFlag:
+        if len(results) == 0:
+            choice = messagebox.askyesno("wineTz", "No matches found\nEnable tools for search extension?")
+            if choice:
+                mainQuery = parser.parse(queryText)
+                corrected_query = searcher.correct_query(mainQuery, queryText) 
+                if corrected_query.query != mainQuery:
+                    return queryReply(ix, parameters, corrected_query.string)
+
+    rObject = objectFormatter (queryInWork[0], queryInWork[1], queryInWork[2], mainQuery, combined_filter, searchField, andFlag, sentimentRequest, algorithm, len(results), correctionFlag, thesaurusFlag)
+    
+    if UIMode:
+        print (rObject)
+
+    #* SENTIMENT in query
+    if sentimentRequest:
+        newRank = []
+        for result in results:
+            match sentimentRequest [0]:
+                case "L":
+                    if result.fields()["sentiment"] == sentimentRequest [1]:
+                        result.score /= 1.5
+                    newRank.append(result)
+                case "l":
+                    if result.fields()["sentiment"] == sentimentRequest [1]:
+                        result.score /= 1.2
+                    newRank.append(result)
+
+                case "M":
+                    if result.fields()["sentiment"] == sentimentRequest [1]:
+                        result.score *= 1.5
+                    newRank.append(result)
+                
+                case "m":
+                    if result.fields()["sentiment"] == sentimentRequest [1]:
+                        result.score *= 1.2
+                    newRank.append(result)
+
+                case _:
+                    print ("\n\n] error detected: sentiment score attribution in query exploration.\n\n")
+                    quit()
+                    
+        newRank.sort(key = lambda x: x.score, reverse=True)
+        results = newRank 
+
+    return rObject, results
+
+
 if __name__ == "__main__":
     raise ImportError("This is not an executable program: run searcher.py")
+
+
